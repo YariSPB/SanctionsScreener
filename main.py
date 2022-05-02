@@ -33,7 +33,7 @@ if __name__ == '__main__':
     ftp_server.dir()
 
     # Enter File Name with Extension
-    filename = "add.csv"
+    filename = "sdn_advanced.xml"
 
     # Write file in binary mode
     with open(curr_dir + raw_data_dir +"/"+filename, "wb") as file:
