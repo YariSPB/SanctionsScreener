@@ -1,6 +1,7 @@
 import ftplib
 import pathlib
 import os
+import sqlite3
 
 HOSTNAME = "ofacftp.treas.gov"
 FOLDER_NAME = "/fac_delim"
@@ -9,6 +10,7 @@ PASSWORD = "anonymous@domain.com"
 curr_dir = os.getcwd()
 raw_data_dir = '/raw_data'
 db_dir = '/database'
+SDN_DB_name = "SDN.db"
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -36,6 +38,8 @@ def load_file(filename):
     ftp_server.quit()
 
 
+def create_SDN_DB():
+    conn = sqlite3.connect(curr_dir + db_dir+"/" + SDN_DB_name)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -45,4 +49,9 @@ if __name__ == '__main__':
     #raw_data_dir = '/raw_data'
     pathlib.Path(curr_dir + raw_data_dir).mkdir(exist_ok=True)
     pathlib.Path(curr_dir + db_dir).mkdir(exist_ok=True)
+
+    if not os.path.isfile(curr_dir + db_dir +"/" + SDN_DB_name):
+        create_SDN_DB()
+
+
     #load_file('add.csv')
