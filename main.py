@@ -2,6 +2,7 @@ import ftplib
 import pathlib
 import os
 import sqlite3
+import xml.etree.ElementTree as ET
 
 HOSTNAME = "ofacftp.treas.gov"
 FOLDER_NAME = "/fac_delim"
@@ -9,6 +10,7 @@ USERNAME = "anonymous"
 PASSWORD = "anonymous@domain.com"
 curr_dir = os.getcwd()
 raw_data_dir = '/raw_data'
+raw_xml_name = '/sdn_advanced.xml'
 db_dir = '/database'
 SDN_DB_name = "SDN.db"
 
@@ -39,7 +41,18 @@ def load_file(filename):
 
 
 def create_SDN_DB():
-    conn = sqlite3.connect(curr_dir + db_dir+"/" + SDN_DB_name)
+    con = sqlite3.connect(curr_dir + db_dir+"/" + SDN_DB_name)
+    cur = con.cursor()
+    # Create table
+    cur.execute('''CREATE TABLE IF NOT EXISTS DistinctParty
+                   (FixedRef INTEGER PRIMARY KEY, 
+                   PrimaryName TEXT,
+                   EntityType INTEGER,
+                   EntryDate TEXT,
+                   BlockingSanctions INTEGER
+                   )''')
+    con.commit()
+    con.close()
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -52,6 +65,15 @@ if __name__ == '__main__':
 
     if not os.path.isfile(curr_dir + db_dir +"/" + SDN_DB_name):
         create_SDN_DB()
+
+    if not os.path.isfile(curr_dir + raw_data_dir +raw_xml_name):
+        print("No xml file: " +raw_xml_name)
+        exit()
+
+    tree = ET.parse(curr_dir + raw_data_dir +raw_xml_name)
+
+    x=5
+
 
 
     #load_file('add.csv')
