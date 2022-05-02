@@ -2,19 +2,20 @@ import ftplib
 import pathlib
 import os
 
+HOSTNAME = "ofacftp.treas.gov"
+FOLDER_NAME = "/fac_delim"
+USERNAME = "anonymous"
+PASSWORD = "anonymous@domain.com"
+curr_dir = os.getcwd()
+raw_data_dir = '/raw_data'
+db_dir = '/database'
+
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
     print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
 
 
 def load_file(filename):
-    HOSTNAME = "ofacftp.treas.gov"
-    FOLDER_NAME = "/fac_delim"
-    USERNAME = "anonymous"
-    PASSWORD = "anonymous@domain.com"
-    curr_dir = os.getcwd()
-    raw_data_dir = '/raw_data'
-
     # Connect FTP Server
     ftp_server = ftplib.FTP(HOSTNAME, USERNAME, PASSWORD)
 
@@ -40,7 +41,8 @@ def load_file(filename):
 if __name__ == '__main__':
     print_hi('PyCharm')
 
-    curr_dir = os.getcwd()
-    raw_data_dir = '/raw_data'
+    #curr_dir = os.getcwd()
+    #raw_data_dir = '/raw_data'
     pathlib.Path(curr_dir + raw_data_dir).mkdir(exist_ok=True)
-    load_file('add.csv')
+    pathlib.Path(curr_dir + db_dir).mkdir(exist_ok=True)
+    #load_file('add.csv')
