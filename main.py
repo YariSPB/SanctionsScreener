@@ -71,8 +71,6 @@ def create_SDN_DB():
 if __name__ == '__main__':
     print_hi('PyCharm')
 
-    #curr_dir = os.getcwd()
-    #raw_data_dir = '/raw_data'
     pathlib.Path(curr_dir + raw_data_dir).mkdir(exist_ok=True)
     pathlib.Path(curr_dir + db_dir).mkdir(exist_ok=True)
 
@@ -84,83 +82,7 @@ if __name__ == '__main__':
         exit()
 
     xml_r = XmlReader()
-
     distinct_parties = xml_r.get_distinct_entities()
-
-
-#    tree = ET.parse(curr_dir + raw_data_dir +raw_xml_name)
-#    root = tree.getroot()
-#    print(root)
-
-
-#    distinct_parties = root.find(tree_prefix + 'DistinctParties')
-#    print(distinct_parties)
-#    count = 0
-
-#    all_parties = {}
-
-
-#    for entry in distinct_parties:
-#        party_dict = {}
-#        print(entry.tag, entry.attrib)
-#        fixed_ref = entry.attrib.get('FixedRef')
-#        party_dict['FixedRef'] = entry.attrib.get('FixedRef')
-
-#        profile = entry.find(tree_prefix + 'Profile')
-#        print(profile.tag)
-#       entity_type = None
-#       entity_sub_type = profile.attrib.get('PartySubTypeID')
-#        if entity_sub_type == '4':
-#            entity_type = Entity.INDIVIDUAL
-#        elif entity_sub_type == '3':
-#            entity_type = Entity.ENTITY
-#        elif entity_sub_type == '2':
-#            entity_type = Entity.AIRCRAFT
-#        elif entity_sub_type == '1':
-#            entity_type = Entity.VESSEL
-#        else:
-#            entity_type = Entity.OTHER
-
-#        party_dict['EntityType'] = entity_type
-
-
-#        identity = profile.find(tree_prefix + 'Identity')
-#        aliases = identity.findall(tree_prefix + 'Alias')
-#        primary_alias = None
-#        for alias in aliases:
-#            if alias.attrib.get('Primary') == 'true':
-#                primary_alias = alias
-#                break
-
-#        latin_name_container = None
-#        for name_type in primary_alias:
-#            if name_type.attrib.get('DocNameStatusID') == '1':
-#                latin_name_container = name_type
-#                break
-
-#        full_name = ''
-#        for name_part_holder in latin_name_container:
-#           name_part = name_part_holder.find(tree_prefix + 'NamePartValue').text
-#            full_name = full_name + name_part
-
-#        party_dict['PrimaryName'] = full_name
-#        all_parties[fixed_ref] = party_dict
-#        #party_dict['SDN'] = 1
-
-#        print(full_name)
-#        count = count+1
-#        if count > 50:
-#            break
-#    print(count)
-
-    #entity_record = """INSERT INTO DistinctParty
-    #    (FixedRef,PrimaryName,EntityType,SDN)
-    #    VALUES(fixed_ref,full_name,entity_type,1)"""
-
-    #cursor = conn.cursor()
-    #cursor.execute(employee, (eid, name, email, phone, date))
-    #conn.commit()
-
 
     x=5
 
