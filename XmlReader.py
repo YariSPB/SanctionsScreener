@@ -90,3 +90,10 @@ class XmlReader:
                 day = date_record.find(tree_prefix + 'Day').text
                 self.all_parties[FixedRef]["Date"] = year+'-'+month+'-'+day
                 r = 5
+
+            sanctions_measures = sanctions_entry.findall(tree_prefix + 'SanctionsMeasure')
+            programs = ''
+            for measure in sanctions_measures:
+                if measure.attrib.get('SanctionsTypeID') == '1':
+                    programs += measure.find(tree_prefix + 'Comment').text
+            self.all_parties[FixedRef]["SanctionsPrograms"] = programs
