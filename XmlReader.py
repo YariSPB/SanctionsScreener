@@ -20,13 +20,11 @@ class XmlReader:
     def __init__(self):
         self.tree = ET.parse(curr_dir + raw_data_dir + raw_xml_name)
         self.root = self.tree.getroot()
+        self.all_parties = {}
 
     def get_distinct_entities(self):
         distinct_parties = self.root.find(tree_prefix + 'DistinctParties')
-        #print(distinct_parties)
-        count = 0
-
-        all_parties = {}
+        #all_parties = {}
 
         for entry in distinct_parties:
             party_dict = {}
@@ -71,7 +69,24 @@ class XmlReader:
                 full_name = full_name + name_part
 
             party_dict['PrimaryName'] = full_name
-            all_parties[fixed_ref] = party_dict
-            # party_dict['SDN'] = 1
+            self.all_parties[fixed_ref] = party_dict
 
-        return all_parties
+        self.__append_sanctions_data()
+
+        return self.all_parties
+
+
+    def __append_sanctions_data(self):
+        sanction_entries = self.root.find(tree_prefix + 'SanctionsEntries')
+
+        for sanctions_entry in sanction_entries:
+            entry_event = sanctions_entry.find(tree_prefix + 'EntryEvent')
+            if entry_event.attrib.get('EntryEventTypeID') == '1':
+                FixedRef = sanctions_entry.attrib.get('ProfileID')
+                #if self.all_parties[FixedRef] in self.all_parties:
+                date_record = entry_event.find(tree_prefix + 'Date')
+                year = date_record.find(tree_prefix + 'Year').text
+                month = date_record.find(tree_prefix + 'Month').text
+                day = date_record.find(tree_prefix + 'Day').text
+                self.all_parties[FixedRef]["Date"] = year+'-'+month+'-'+day
+                r = 5
