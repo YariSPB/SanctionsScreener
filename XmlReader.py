@@ -24,16 +24,16 @@ class XmlReader:
 
     def get_distinct_entities(self):
         distinct_parties = self.root.find(tree_prefix + 'DistinctParties')
-        #all_parties = {}
+        # all_parties = {}
 
         for entry in distinct_parties:
             party_dict = {}
-            #print(entry.tag, entry.attrib)
+            # print(entry.tag, entry.attrib)
             fixed_ref = entry.attrib.get('FixedRef')
             party_dict['FixedRef'] = entry.attrib.get('FixedRef')
 
             profile = entry.find(tree_prefix + 'Profile')
-            #print(profile.tag)
+            # print(profile.tag)
             entity_type = None
             entity_sub_type = profile.attrib.get('PartySubTypeID')
             if entity_sub_type == '4':
@@ -63,18 +63,18 @@ class XmlReader:
                     latin_name_container = name_type
                     break
 
-            full_name = ''
+            full_name = None
             for name_part_holder in latin_name_container:
                 name_part = name_part_holder.find(tree_prefix + 'NamePartValue').text
-                full_name = full_name + name_part
+                if not full_name:
+                    full_name = name_part
+                else:
+                    full_name += ' ' + name_part
 
             party_dict['PrimaryName'] = full_name
             self.all_parties[fixed_ref] = party_dict
-
         self.__append_sanctions_data()
-
         return self.all_parties
-
 
     def __append_sanctions_data(self):
         sanction_entries = self.root.find(tree_prefix + 'SanctionsEntries')
@@ -83,17 +83,20 @@ class XmlReader:
             entry_event = sanctions_entry.find(tree_prefix + 'EntryEvent')
             if entry_event.attrib.get('EntryEventTypeID') == '1':
                 FixedRef = sanctions_entry.attrib.get('ProfileID')
-                #if self.all_parties[FixedRef] in self.all_parties:
+                # if self.all_parties[FixedRef] in self.all_parties:
                 date_record = entry_event.find(tree_prefix + 'Date')
                 year = date_record.find(tree_prefix + 'Year').text
-                month = date_record.find(tree_prefix + 'Month').text
-                day = date_record.find(tree_prefix + 'Day').text
-                self.all_parties[FixedRef]["Date"] = year+'-'+month+'-'+day
+                month = date_record.find(tree_prefix + 'Month').text.zfill(2)
+                day = date_record.find(tree_prefix + 'Day').text.zfill(2)
+                self.all_parties[FixedRef]['SDNEntryDate'] = year + '-' + month + '-' + day
                 r = 5
 
             sanctions_measures = sanctions_entry.findall(tree_prefix + 'SanctionsMeasure')
-            programs = ''
+            programs = None
             for measure in sanctions_measures:
                 if measure.attrib.get('SanctionsTypeID') == '1':
-                    programs += measure.find(tree_prefix + 'Comment').text
-            self.all_parties[FixedRef]["SanctionsPrograms"] = programs
+                    if not programs:
+                        programs = measure.find(tree_prefix + 'Comment').text
+                    else:
+                        programs +=', ' + measure.find(tree_prefix + 'Comment').text
+            self.all_parties[FixedRef]["SDNPrograms"] = programs

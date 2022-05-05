@@ -17,7 +17,7 @@ raw_xml_name = '/sdn_advanced.xml'
 db_dir = '/database'
 SDN_DB_name = "SDN.db"
 tree_prefix = '{http://www.un.org/sanctions/1.0}'
-
+DB_CON = None
 
 class Entity(Enum):
     INDIVIDUAL = 1
@@ -58,11 +58,13 @@ def create_SDN_DB():
     con = sqlite3.connect(curr_dir + db_dir+"/" + SDN_DB_name)
     cur = con.cursor()
     # Create table
-    cur.execute('''CREATE TABLE IF NOT EXISTS DistinctParty
+    cur.execute('''CREATE TABLE IF NOT EXISTS SDNParty
                    (FixedRef INTEGER PRIMARY KEY, 
                    PrimaryName TEXT,
                    EntityType INTEGER,
-                   SDN INTEGER
+                   SDNStatus INTEGER,
+                   SDNEntryDate TEXT,
+                   SDNPrograms TEXT
                    )''')
     con.commit()
     con.close()
@@ -74,8 +76,14 @@ if __name__ == '__main__':
     pathlib.Path(curr_dir + raw_data_dir).mkdir(exist_ok=True)
     pathlib.Path(curr_dir + db_dir).mkdir(exist_ok=True)
 
+
+
     if not os.path.isfile(curr_dir + db_dir +"/" + SDN_DB_name):
         create_SDN_DB()
+
+    DB_CON = sqlite3.connect(curr_dir + db_dir+"/" + SDN_DB_name)
+    cur = DB_CON.cursor()
+
 
     if not os.path.isfile(curr_dir + raw_data_dir +raw_xml_name):
         print("No xml file: " +raw_xml_name)
@@ -84,8 +92,26 @@ if __name__ == '__main__':
     xml_r = XmlReader()
     distinct_parties = xml_r.get_distinct_entities()
 
-    x=5
+    insert_command = '''INSERT INTO SDNParty (
+                   FixedRef, 
+                   PrimaryName,
+                   EntityType,
+                   SDNStatus,
+                   SDNEntryDate,
+                   SDNPrograms)
+                   VALUES (?,?,?,?,?,?)
+                   '''
 
+    for key in distinct_parties:
 
+        data_tuple = (key,\
+                      distinct_parties[key]['PrimaryName'],\
+                      distinct_parties[key]['EntityType'].value,\
+                      1,\
+                      distinct_parties[key]['SDNEntryDate'],\
+                      distinct_parties[key]['SDNPrograms'])
+        DB_CON.execute(insert_command, data_tuple)
 
+    DB_CON.commit()
+    DB_CON.close()
     #load_file('add.csv')
