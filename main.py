@@ -5,6 +5,7 @@ import sqlite3
 import xml.etree.ElementTree as ET
 from enum import Enum
 from XmlReader import *
+from data_store import *
 
 
 HOSTNAME = "ofacftp.treas.gov"
@@ -42,9 +43,6 @@ def load_file(filename):
     ftp_server.cwd(FOLDER_NAME)
     ftp_server.dir()
 
-    # Enter File Name with Extension
-    #filename = "sdn_advanced.xml"
-
     # Write file in binary mode
     with open(curr_dir + raw_data_dir +"/"+filename, "wb") as file:
         # Command for Downloading the file "RETR filename"
@@ -53,37 +51,12 @@ def load_file(filename):
     # Close the Connection
     ftp_server.quit()
 
-
-def create_SDN_DB():
-    con = sqlite3.connect(curr_dir + db_dir+"/" + SDN_DB_name)
-    cur = con.cursor()
-    # Create table
-    cur.execute('''CREATE TABLE IF NOT EXISTS SDNParty
-                   (FixedRef INTEGER PRIMARY KEY, 
-                   PrimaryName TEXT,
-                   EntityType INTEGER,
-                   SDNStatus INTEGER,
-                   SDNEntryDate TEXT,
-                   SDNPrograms TEXT
-                   )''')
-    con.commit()
-    con.close()
-
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     print_hi('PyCharm')
 
     pathlib.Path(curr_dir + raw_data_dir).mkdir(exist_ok=True)
     pathlib.Path(curr_dir + db_dir).mkdir(exist_ok=True)
-
-
-
-    if not os.path.isfile(curr_dir + db_dir +"/" + SDN_DB_name):
-        create_SDN_DB()
-
-    DB_CON = sqlite3.connect(curr_dir + db_dir+"/" + SDN_DB_name)
-    cur = DB_CON.cursor()
-
 
     if not os.path.isfile(curr_dir + raw_data_dir +raw_xml_name):
         print("No xml file: " +raw_xml_name)
@@ -92,26 +65,6 @@ if __name__ == '__main__':
     xml_r = XmlReader()
     distinct_parties = xml_r.get_distinct_entities()
 
-    insert_command = '''INSERT INTO SDNParty (
-                   FixedRef, 
-                   PrimaryName,
-                   EntityType,
-                   SDNStatus,
-                   SDNEntryDate,
-                   SDNPrograms)
-                   VALUES (?,?,?,?,?,?)
-                   '''
+    data_store = DataStore()
+    data_store.insert_new(distinct_parties)
 
-    for key in distinct_parties:
-
-        data_tuple = (key,\
-                      distinct_parties[key]['PrimaryName'],\
-                      distinct_parties[key]['EntityType'].value,\
-                      1,\
-                      distinct_parties[key]['SDNEntryDate'],\
-                      distinct_parties[key]['SDNPrograms'])
-        DB_CON.execute(insert_command, data_tuple)
-
-    DB_CON.commit()
-    DB_CON.close()
-    #load_file('add.csv')
