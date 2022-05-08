@@ -52,9 +52,33 @@ class XmlReader:
                     full_name += ' ' + name_part
 
             party_dict['PrimaryName'] = full_name
+
+            # get non latin aliases concatenated
+            second_name = []
+            for alias in aliases:
+                if alias.attrib.get('Primary') == 'false':
+                    for documented_name in alias:
+                        if documented_name.attrib.get('DocNameStatusID') == '2':
+                            for documented_name_part in documented_name:
+                                for name_part in documented_name_part:
+                                    if name_part.attrib.get('ScriptID') == "215":
+                                        second_name.append(name_part.text)
+                    break
+
+            party_dict['AliasLatin'] = ' '.join(second_name)
+
+
             self.all_parties[fixed_ref] = party_dict
         self.__append_sanctions_data()
         return self.all_parties
+
+
+    def __get_full_name(self, name_container):
+        full_name = []
+        for name_part_holder in name_container:
+            #name_part = name_part_holder.find(c.tree_prefix + 'NamePartValue').text
+            full_name.append(name_part_holder.find(c.tree_prefix + 'NamePartValue').text)
+        return ' '.join(full_name)
 
     def __append_sanctions_data(self):
         sanction_entries = self.root.find(c.tree_prefix + 'SanctionsEntries')

@@ -18,7 +18,7 @@ class DataStore:
     def export_sdn_csv(self):
         data = self.cur.execute("SELECT * FROM SDNParty").fetchall()
         try:
-            with open(c.curr_dir + c.export_dir + "/" + c.SDN_SCV, 'w', newline='') as f:
+            with open(c.curr_dir + c.export_dir + "/" + c.SDN_SCV, 'w', newline='', encoding="utf-8") as f:
                 writer = csv.writer(f)
                 header = [ \
                     'FixedRef', \
@@ -26,7 +26,8 @@ class DataStore:
                     'EntityType', \
                     'SDNStatus', \
                     'SDNEntryDate', \
-                    'SDNPrograms']
+                    'SDNPrograms',\
+                    'Alias']
                 writer.writerow(header)
                 for item in data:
                     line = [item[0],\
@@ -34,7 +35,8 @@ class DataStore:
                             c.get_entity_str(item[2]),\
                             'Yes' if item[3] == 1 else 'No',\
                             item[4],\
-                            item[5]]
+                            item[5],
+                            item[6]]
                     writer.writerow(line)
         except Exception as e:
             print(str(e))
@@ -56,8 +58,9 @@ class DataStore:
                        EntityType,
                        SDNStatus,
                        SDNEntryDate,
-                       SDNPrograms)
-                       VALUES (?,?,?,?,?,?)
+                       SDNPrograms,
+                       AliasLatin)
+                       VALUES (?,?,?,?,?,?,?)
                        '''
 
         for key in distinct_parties:
@@ -70,7 +73,8 @@ class DataStore:
                               distinct_parties[key]['EntityType'].value, \
                               1, \
                               distinct_parties[key]['SDNEntryDate'], \
-                              distinct_parties[key]['SDNPrograms'])
+                              distinct_parties[key]['SDNPrograms'],\
+                              distinct_parties[key]['AliasLatin'])
                 self.con.execute(insert_command, data_tuple)
         self.con.commit()
         pass
@@ -82,10 +86,12 @@ class DataStore:
         cur.execute('''CREATE TABLE IF NOT EXISTS SDNParty
                        (FixedRef INTEGER PRIMARY KEY, 
                        PrimaryName TEXT,
+                       
                        EntityType INTEGER,
                        SDNStatus INTEGER,
                        SDNEntryDate TEXT,
-                       SDNPrograms TEXT
+                       SDNPrograms TEXT,
+                       AliasLatin TEXT
                        )''')
         con.commit()
         con.close()
