@@ -8,6 +8,7 @@ if __name__ == '__main__':
     print("SDN Screener started.")
     data_store = DataStore()
     screener = Screener(db=data_store)
+
     if not screener.new_SDN_published():
         print('No new SDN entries. Terminating')
         exit()
@@ -20,3 +21,4 @@ if __name__ == '__main__':
     xml_r = XmlReader()
     distinct_parties = xml_r.get_distinct_entities()
     data_store.insert_new(distinct_parties)
+    data_store.export_sdn_csv()
