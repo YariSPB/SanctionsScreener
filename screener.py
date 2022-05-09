@@ -2,6 +2,7 @@ import ftplib
 from data_store import *
 import config as c
 import pathlib
+from XmlReader import *
 
 
 class Screener:
@@ -11,10 +12,16 @@ class Screener:
         pathlib.Path(c.curr_dir + c.raw_data_dir).mkdir(exist_ok=True)
 
 
-    def load_if_new_SDN_published(self):
+    def get_new_SDN(self):
         if not self.new_SDN_published():
-            return
+            print('No new SDN entries. Terminating')
+            exit()
         self.load_SDN_file(c.raw_xml_name)
+        xml_r = XmlReader()
+        distinct_parties = xml_r.get_distinct_entities()
+        self.data_store.insert_new(distinct_parties)
+        self.data_store.export_sdn_csv()
+
 
     def new_SDN_published(self):
         try:
@@ -72,7 +79,7 @@ class Screener:
         # force UTF-8 encoding
         ftp_server.encoding = "utf-8"
         ftp_server.cwd(c.FOLDER_NAME)
-        ftp_server.dir()
+        #ftp_server.dir()
 
         # Write file in binary mode
         with open(c.curr_dir + c.raw_data_dir + "/" + filename, "wb") as file:

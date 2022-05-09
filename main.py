@@ -8,7 +8,9 @@ if __name__ == '__main__':
     print("SDN Screener started.")
     data_store = DataStore()
     screener = Screener(db=data_store)
-    data_store.export_sdn_csv()
+    screener.get_new_SDN()
+
+    #data_store.export_sdn_csv()
     exit()
 
     #xml_r = XmlReader()
