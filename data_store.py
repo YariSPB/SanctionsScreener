@@ -15,6 +15,7 @@ class DataStore:
         self.con = sqlite3.connect(c.curr_dir + c.db_dir + "/" + c.SDN_DB_name)
         self.cur = self.con.cursor()
         self.__setup_property_table()
+        self.__setup_feature_table()
 
     def export_sdn_csv(self):
         data = self.cur.execute("SELECT * FROM SDNParty").fetchall()
@@ -110,4 +111,8 @@ class DataStore:
                 push = 'INSERT INTO Properties (name) VALUES ("{}")'.format(prop)
                 self.cur.execute(push)
                 self.con.commit()
+
+    def __setup_feature_table(self):
+        self.cur.execute('CREATE TABLE IF NOT EXISTS Features (' + c.features_schema + ')')
+        self.con.commit()
 

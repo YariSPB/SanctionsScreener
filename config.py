@@ -38,3 +38,14 @@ properties = [
     'Alias_cyrillic',
     'Tax_ID'
 ]
+
+features_schema = '''feature_id INTEGER PRIMARY KEY,
+                Value_text TEXT,
+                Value_int INTEGER,
+                Entity_ref INTEGER NOT NULL,
+                Property_ref INTEGER NOT NULL,
+                FOREIGN KEY (Entity_ref) REFERENCES SDNParty (FixedRef)
+                ON DELETE CASCADE
+                FOREIGN KEY (Property_ref) REFERENCES Properties (property_id)
+                ON DELETE CASCADE
+             '''
