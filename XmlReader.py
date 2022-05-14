@@ -32,27 +32,7 @@ class XmlReader:
             identity = profile.find(c.tree_prefix + 'Identity')
             aliases = identity.findall(c.tree_prefix + 'Alias')
             alias_dict = self.__get__aliases(aliases)
-            primary_alias = None
-            for alias in aliases:
-                if alias.attrib.get('Primary') == 'true':
-                    primary_alias = alias
-                    break
-
-            latin_name_container = None
-            for name_type in primary_alias:
-                if name_type.attrib.get('DocNameStatusID') == '1':
-                    latin_name_container = name_type
-                    break
-
-            full_name = None
-            for name_part_holder in latin_name_container:
-                name_part = name_part_holder.find(c.tree_prefix + 'NamePartValue').text
-                if not full_name:
-                    full_name = name_part
-                else:
-                    full_name += ' ' + name_part
-
-            party_dict['PrimaryName'] = full_name
+            party_dict['PrimaryName'] = alias_dict['Primary']
 
             # get latin aliases concatenated
             second_name = []

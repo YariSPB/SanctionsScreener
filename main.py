@@ -9,8 +9,8 @@ if __name__ == '__main__':
 
     xml_r = XmlReader()
     distinct_parties = xml_r.get_distinct_entities()
-    data_store = DataStore()
-    data_store.insert_new(distinct_parties)
+    #data_store = DataStore()
+    #data_store.insert_new(distinct_parties)
     exit()
 
     #main
