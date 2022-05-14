@@ -4,7 +4,7 @@ import config as c
 
 class XmlReader:
     def __init__(self):
-        self.tree = ET.parse(c.curr_dir + c.raw_data_dir +'/' + c.raw_xml_name)
+        self.tree = ET.parse(c.curr_dir + c.raw_data_dir + '/' + c.raw_xml_name)
         self.root = self.tree.getroot()
         self.all_parties = {}
 
@@ -31,6 +31,7 @@ class XmlReader:
             party_dict['EntityType'] = entity_type
             identity = profile.find(c.tree_prefix + 'Identity')
             aliases = identity.findall(c.tree_prefix + 'Alias')
+            alias_dict = self.__get__aliases(aliases)
             primary_alias = None
             for alias in aliases:
                 if alias.attrib.get('Primary') == 'true':
@@ -53,7 +54,7 @@ class XmlReader:
 
             party_dict['PrimaryName'] = full_name
 
-            # get non latin aliases concatenated
+            # get latin aliases concatenated
             second_name = []
             for alias in aliases:
                 if alias.attrib.get('Primary') == 'false':
@@ -66,17 +67,41 @@ class XmlReader:
                     break
 
             party_dict['AliasLatin'] = ' '.join(second_name)
-
+            party_dict['Alias_dict'] = alias_dict
 
             self.all_parties[fixed_ref] = party_dict
         self.__append_sanctions_data()
         return self.all_parties
 
+    def __get__aliases(self, alias_nodes):
+        aliases = {"Primary": None, "Secondary_latin": [], "Secondary_cyrillic": []}
+        for alias in alias_nodes:
+            name_temp = []
+            for documented_name in alias:
+                for documented_name_part in documented_name:
+                    for name_part in documented_name_part:
+                        if name_part.attrib.get('ScriptID') == "215":
+                            script = 'Latin'
+                        elif name_part.attrib.get('ScriptID') == "220":
+                            script = 'Cyrillic'
+                        else:
+                            script = 'Else'
+                        name_temp.append(name_part.text)
+
+            if alias.attrib.get('Primary') == 'false':
+                if script == 'Cyrillic':
+                    aliases["Secondary_cyrillic"].append(' '.join(name_temp))
+                elif script == 'Latin':
+                    aliases["Secondary_latin"].append(' '.join(name_temp))
+            else:
+                aliases['Primary'] = ' '.join(name_temp)
+
+        return aliases
 
     def __get_full_name(self, name_container):
         full_name = []
         for name_part_holder in name_container:
-            #name_part = name_part_holder.find(c.tree_prefix + 'NamePartValue').text
+            # name_part = name_part_holder.find(c.tree_prefix + 'NamePartValue').text
             full_name.append(name_part_holder.find(c.tree_prefix + 'NamePartValue').text)
         return ' '.join(full_name)
 

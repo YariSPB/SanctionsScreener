@@ -6,6 +6,12 @@ from screener import *
 
 if __name__ == '__main__':
     print("SDN Screener started.")
+
+    xml_r = XmlReader()
+    distinct_parties = xml_r.get_distinct_entities()
+    exit()
+
+    #main
     data_store = DataStore()
     screener = Screener(db=data_store)
     screener.get_new_SDN()
