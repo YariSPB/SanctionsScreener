@@ -14,6 +14,7 @@ class DataStore:
             self.__create_SDN_DB()
         self.con = sqlite3.connect(c.curr_dir + c.db_dir + "/" + c.SDN_DB_name)
         self.cur = self.con.cursor()
+        self.__setup_property_table()
 
     def export_sdn_csv(self):
         data = self.cur.execute("SELECT * FROM SDNParty").fetchall()
@@ -26,15 +27,15 @@ class DataStore:
                     'EntityType', \
                     'SDNStatus', \
                     'SDNEntryDate', \
-                    'SDNPrograms',\
+                    'SDNPrograms', \
                     'Alias']
                 writer.writerow(header)
                 for item in data:
-                    line = [item[0],\
-                            item[1],\
-                            c.get_entity_str(item[2]),\
-                            'Yes' if item[3] == 1 else 'No',\
-                            item[4],\
+                    line = [item[0], \
+                            item[1], \
+                            c.get_entity_str(item[2]), \
+                            'Yes' if item[3] == 1 else 'No', \
+                            item[4], \
                             item[5],
                             item[6]]
                     writer.writerow(line)
@@ -73,7 +74,7 @@ class DataStore:
                               distinct_parties[key]['EntityType'].value, \
                               1, \
                               distinct_parties[key]['SDNEntryDate'], \
-                              distinct_parties[key]['SDNPrograms'],\
+                              distinct_parties[key]['SDNPrograms'], \
                               distinct_parties[key]['AliasLatin'])
                 self.con.execute(insert_command, data_tuple)
         self.con.commit()
@@ -95,3 +96,18 @@ class DataStore:
                        )''')
         con.commit()
         con.close()
+
+    def __setup_property_table(self):
+        # query = self.cur.execute("SELECT name FROM sqlite_master WHERE name = 'Properties'")
+        # if not query.fetchone()[0]:
+        self.cur.execute('CREATE TABLE IF NOT EXISTS Properties (' + c.properties_schema + ')')
+        self.con.commit()
+
+        for prop in c.properties:
+            query = 'SELECT property_id, name FROM Properties WHERE name = "{}"'.format(prop)
+            db_entry = self.cur.execute(query)
+            if not db_entry.fetchone():
+                push = 'INSERT INTO Properties (name) VALUES ("{}")'.format(prop)
+                self.cur.execute(push)
+                self.con.commit()
+

@@ -25,3 +25,16 @@ class Entity(Enum):
 
 def get_entity_str(number):
     return Entity(number).name
+
+
+# Database schemas
+properties_schema = '''property_id INTEGER PRIMARY KEY, 
+                name TEXT
+             '''
+properties = [
+    'Date_birth',
+    'Nationality',
+    'Alias_latin',
+    'Alias_cyrillic',
+    'Tax_ID'
+]
