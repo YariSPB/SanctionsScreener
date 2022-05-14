@@ -53,6 +53,11 @@ class DataStore:
         return None
 
     def insert_new(self, distinct_parties):
+        for key in distinct_parties:
+            self.__insert_entity(distinct_parties[key])
+        self.con.commit()
+
+    def __insert_entity(self, entity):
         insert_command = '''INSERT OR IGNORE INTO SDNParty (
                        FixedRef, 
                        PrimaryName,
@@ -64,16 +69,14 @@ class DataStore:
                        VALUES (?,?,?,?,?,?,?)
                        '''
 
-        for key in distinct_parties:
-            data_tuple = (key, \
-                              distinct_parties[key]['PrimaryName'], \
-                              distinct_parties[key]['EntityType'].value, \
-                              1, \
-                              distinct_parties[key]['SDNEntryDate'], \
-                              distinct_parties[key]['SDNPrograms'], \
-                              distinct_parties[key]['AliasLatin'])
-            self.con.execute(insert_command, data_tuple)
-        self.con.commit()
+        data_tuple = (entity['FixedRef'], \
+                      entity['PrimaryName'], \
+                      entity['EntityType'].value, \
+                      1, \
+                      entity['SDNEntryDate'], \
+                      entity['SDNPrograms'], \
+                      entity['AliasLatin'])
+        self.con.execute(insert_command, data_tuple)
 
     def __create_SDN_DB(self):
         con = sqlite3.connect(c.curr_dir + c.db_dir + "/" + c.SDN_DB_name)
@@ -109,4 +112,3 @@ class DataStore:
     def __setup_feature_table(self):
         self.cur.execute('CREATE TABLE IF NOT EXISTS Features (' + c.features_schema + ')')
         self.con.commit()
-
