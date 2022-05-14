@@ -53,8 +53,7 @@ class DataStore:
         return None
 
     def insert_new(self, distinct_parties):
-        cur = self.con.cursor()
-        insert_command = '''INSERT INTO SDNParty (
+        insert_command = '''INSERT OR IGNORE INTO SDNParty (
                        FixedRef, 
                        PrimaryName,
                        EntityType,
@@ -66,20 +65,15 @@ class DataStore:
                        '''
 
         for key in distinct_parties:
-            not_exist_check = 'SELECT 1 FROM SDNParty WHERE FixedRef = {}'.format(key)
-            db_entry = cur.execute(not_exist_check)
-
-            if not db_entry.fetchone():
-                data_tuple = (key, \
+            data_tuple = (key, \
                               distinct_parties[key]['PrimaryName'], \
                               distinct_parties[key]['EntityType'].value, \
                               1, \
                               distinct_parties[key]['SDNEntryDate'], \
                               distinct_parties[key]['SDNPrograms'], \
                               distinct_parties[key]['AliasLatin'])
-                self.con.execute(insert_command, data_tuple)
+            self.con.execute(insert_command, data_tuple)
         self.con.commit()
-        pass
 
     def __create_SDN_DB(self):
         con = sqlite3.connect(c.curr_dir + c.db_dir + "/" + c.SDN_DB_name)
