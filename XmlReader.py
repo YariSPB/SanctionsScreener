@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import config as c
 from entities import *
 
+tax_id_ref = '1596'
 
 class XmlReader:
     def __init__(self):
@@ -10,6 +11,11 @@ class XmlReader:
         self.all_parties = {}
         self.SDN_persons = {}
         self.countries = {}
+        self.IDRegDocTypes = {}
+
+    def find_by_value(self, str):
+        value = self.root.findall(f".//*[.='{str}']")
+        return value
 
     def get_distinct_entities(self):
         distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
@@ -62,6 +68,8 @@ class XmlReader:
         fixed_ref = entry.attrib.get('FixedRef')
         profile = entry.find(c.tree_prefix + 'Profile')
         identity = profile.find(c.tree_prefix + 'Identity')
+        identity_id = identity.attrib.get('ID')
+        person.tax_id = self.__get_reg_id(identity_id)
         aliases = identity.findall(c.tree_prefix + 'Alias')
         alias_dict = self.__get__aliases(aliases)
         person.primary_name = alias_dict['Primary']
@@ -99,7 +107,33 @@ class XmlReader:
                     location_id = version_location.attrib.get('LocationID')
                     person.nationality = self.__get_nationality(location_id)
 
+        #if person.tax_id:
+        #    print (person.tax_id)
         self.SDN_persons[fixed_ref] = person
+
+    def __get_reg_id(self, identity_id):
+        reg_records = self.root.findall(f"{c.tree_prefix}IDRegDocuments/{c.tree_prefix}IDRegDocument[@IdentityID='{identity_id}']")
+        if not reg_records:
+            return None
+        return reg_records[0].find(f"{c.tree_prefix}IDRegistrationNo").text
+
+
+    def __get_reg_data(self, identity_id):
+        reg_records = self.root.findall(f"{c.tree_prefix}IDRegDocuments/{c.tree_prefix}IDRegDocument[@IdentityID='{identity_id}']") # and @IDRegDocTypeID='{tax_id_ref}']")
+        if not reg_records:
+            return None
+        records = {}
+        for record in reg_records:
+            IDRegDocTypeID = record.attrib.get('IDRegDocTypeID')
+            registration_type = self.IDRegDocTypes.get(IDRegDocTypeID)
+            if not registration_type:
+                registration_type = self.root.find(f"{c.tree_prefix}ReferenceValueSets/{c.tree_prefix}IDRegDocTypeValues/{c.tree_prefix}IDRegDocType[@ID='{IDRegDocTypeID}']").text
+                self.IDRegDocTypes[IDRegDocTypeID] = registration_type
+            IDRegistrationDoc = record.find(f"{c.tree_prefix}IDRegistrationNo").text
+            records[registration_type] = IDRegistrationDoc
+        return records
+
+
 
     def __get_nationality(self, location_id):
         if location_id in self.countries:
