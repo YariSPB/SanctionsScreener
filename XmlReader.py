@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import config as c
+from entities import *
 
 
 class XmlReader:
@@ -7,6 +8,8 @@ class XmlReader:
         self.tree = ET.parse(c.curr_dir + c.raw_data_dir + '/' + c.raw_xml_name)
         self.root = self.tree.getroot()
         self.all_parties = {}
+        self.SDN_persons = {}
+        self.countries = {}
 
     def get_distinct_entities(self):
         distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
@@ -19,6 +22,7 @@ class XmlReader:
             entity_sub_type = profile.attrib.get('PartySubTypeID')
             if entity_sub_type == '4':
                 entity_type = c.Entity.INDIVIDUAL
+                self.__append_person(entry)
             elif entity_sub_type == '3':
                 entity_type = c.Entity.ENTITY
             elif entity_sub_type == '2':
@@ -52,6 +56,60 @@ class XmlReader:
             self.all_parties[fixed_ref] = party_dict
         self.__append_sanctions_data()
         return self.all_parties
+
+    def __append_person(self, entry):
+        person = Person()
+        fixed_ref = entry.attrib.get('FixedRef')
+        profile = entry.find(c.tree_prefix + 'Profile')
+        identity = profile.find(c.tree_prefix + 'Identity')
+        aliases = identity.findall(c.tree_prefix + 'Alias')
+        alias_dict = self.__get__aliases(aliases)
+        person.primary_name = alias_dict['Primary']
+        person.secondary_latin = alias_dict['Secondary_latin']
+        person.secondary_cyrillic = alias_dict['Secondary_cyrillic']
+
+        features = profile.findall(c.tree_prefix + 'Feature')
+        for feature in features:
+            if feature.attrib.get('FeatureTypeID') == '8':
+                #get DOB
+                feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
+                date_period = feature_version.find(c.tree_prefix + 'DatePeriod')
+                start_date = date_period.find(c.tree_prefix + 'Start')
+                from_date = start_date.find(c.tree_prefix + 'From')
+
+                year = from_date.find(c.tree_prefix + 'Year').text
+                month = from_date.find(c.tree_prefix + 'Month').text.zfill(2)
+                day = from_date.find(c.tree_prefix + 'Day').text.zfill(2)
+                person.birth_date = year + '-' + month + '-' + day
+            elif feature.attrib.get('FeatureTypeID') == '224':
+                #gender
+                feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
+                version_detail = feature_version.find(c.tree_prefix + 'VersionDetail')
+                if version_detail.attrib.get('DetailReferenceID') == '91526':
+                    person.gender = 'Male'
+                elif version_detail.attrib.get('DetailReferenceID') == '91527':
+                    person.gender = 'Female'
+            elif feature.attrib.get('FeatureTypeID') == '10':
+                #nationality country
+                feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
+                version_detail = feature_version.find(c.tree_prefix + 'VersionDetail')
+                if version_detail.attrib.get('DetailTypeID') == '1433':
+                    #country only
+                    version_location = feature_version.find(c.tree_prefix + 'VersionLocation')
+                    location_id = version_location.attrib.get('LocationID')
+                    person.nationality = self.__get_nationality(location_id)
+
+        self.SDN_persons[fixed_ref] = person
+
+    def __get_nationality(self, location_id):
+        if location_id in self.countries:
+            return self.countries[location_id]
+        locations = self.root.find(f"{c.tree_prefix}Locations")
+        location = locations.find(f"{c.tree_prefix}Location[@ID='{location_id}']")
+        value = location.find(f".//{c.tree_prefix}Value").text
+        self.countries[location_id] = value
+        return value
+
 
     def __get__aliases(self, alias_nodes):
         aliases = {"Primary": None, "Secondary_latin": [], "Secondary_cyrillic": []}

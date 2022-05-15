@@ -78,6 +78,10 @@ class DataStore:
                       entity['AliasLatin'])
         self.con.execute(insert_command, data_tuple)
 
+    def __insert_feature(self, entity):
+
+        pass
+
     def __create_SDN_DB(self):
         con = sqlite3.connect(c.curr_dir + c.db_dir + "/" + c.SDN_DB_name)
         cur = con.cursor()

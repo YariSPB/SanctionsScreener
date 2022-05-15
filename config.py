@@ -49,3 +49,6 @@ features_schema = '''feature_id INTEGER PRIMARY KEY,
                 ON DELETE CASCADE
                 UNIQUE(Value, Entity_ref, Property_ref)
              '''
+
+
+
