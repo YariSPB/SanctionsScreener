@@ -3,13 +3,16 @@ import config as c
 from entities import *
 
 tax_id_ref = '1596'
+pre = c.tree_prefix
 
 class XmlReader:
     def __init__(self):
         self.tree = ET.parse(c.curr_dir + c.raw_data_dir + '/' + c.raw_xml_name)
         self.root = self.tree.getroot()
         self.all_parties = {}
-        self.SDN_persons = {}
+        self.SDN_data = {}
+        self.persons = {}
+        self.SDN_Persons = {}
         self.countries = {}
         self.IDRegDocTypes = {}
 
@@ -63,6 +66,32 @@ class XmlReader:
         self.__append_sanctions_data()
         return self.all_parties
 
+    def get_all_SDN_persons(self):
+        self.find_persons()
+        self.__collect_SDN_data()
+        for key in self.persons:
+            sdn_record = self.SDN_data[key]
+            person = self.persons[key]
+            sdn_person = SDN_Person(person, key, sdn_record['SDNEntryDate'], sdn_record['SDNPrograms'])
+            self.SDN_Persons[key] = sdn_person
+        pass
+
+
+
+    def find_persons(self):
+        distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
+        for entry in distinct_parties:
+            party_dict = {}
+            fixed_ref = entry.attrib.get('FixedRef')
+            party_dict['FixedRef'] = entry.attrib.get('FixedRef')
+            profile = entry.find(c.tree_prefix + 'Profile')
+            entity_sub_type = profile.attrib.get('PartySubTypeID')
+            if entity_sub_type == '4':
+                entity_type = c.Entity.INDIVIDUAL
+                self.__append_person(entry)
+
+
+
     def __append_person(self, entry):
         person = Person()
         fixed_ref = entry.attrib.get('FixedRef')
@@ -80,19 +109,19 @@ class XmlReader:
         for feature in features:
             if feature.attrib.get('FeatureTypeID') == '8':
                 #get DOB
-                feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
-                date_period = feature_version.find(c.tree_prefix + 'DatePeriod')
-                start_date = date_period.find(c.tree_prefix + 'Start')
-                from_date = start_date.find(c.tree_prefix + 'From')
-
-                year = from_date.find(c.tree_prefix + 'Year').text
-                month = from_date.find(c.tree_prefix + 'Month').text.zfill(2)
-                day = from_date.find(c.tree_prefix + 'Day').text.zfill(2)
+                #feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
+                #date_period = feature_version.find(c.tree_prefix + 'DatePeriod')
+                #start_date = date_period.find(c.tree_prefix + 'Start')
+                #from_date = start_date.find(c.tree_prefix + 'From')
+                from_date = feature.find(f"{pre}FeatureVersion/{pre}DatePeriod/{pre}Start/{pre}From")
+                year = from_date.find(pre + 'Year').text
+                month = from_date.find(pre + 'Month').text.zfill(2)
+                day = from_date.find(pre + 'Day').text.zfill(2)
                 person.birth_date = year + '-' + month + '-' + day
             elif feature.attrib.get('FeatureTypeID') == '224':
                 #gender
                 feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
-                version_detail = feature_version.find(c.tree_prefix + 'VersionDetail')
+                version_detail = feature.find(f"{pre}FeatureVersion/{pre}VersionDetail")
                 if version_detail.attrib.get('DetailReferenceID') == '91526':
                     person.gender = 'Male'
                 elif version_detail.attrib.get('DetailReferenceID') == '91527':
@@ -109,7 +138,7 @@ class XmlReader:
 
         #if person.tax_id:
         #    print (person.tax_id)
-        self.SDN_persons[fixed_ref] = person
+        self.persons[fixed_ref] = person
 
     def __get_reg_id(self, identity_id):
         reg_records = self.root.findall(f"{c.tree_prefix}IDRegDocuments/{c.tree_prefix}IDRegDocument[@IdentityID='{identity_id}']")
@@ -177,25 +206,61 @@ class XmlReader:
             full_name.append(name_part_holder.find(c.tree_prefix + 'NamePartValue').text)
         return ' '.join(full_name)
 
+
+
+
+    def __collect_SDN_data(self):
+        sanction_entries = self.root.find(c.tree_prefix + 'SanctionsEntries')
+        for sanctions_entry in sanction_entries:
+            sdn_data = self.__get_SDN_data(sanctions_entry)
+            self.SDN_data[sdn_data['FixedRef']] = sdn_data
+
+
+
     def __append_sanctions_data(self):
         sanction_entries = self.root.find(c.tree_prefix + 'SanctionsEntries')
         for sanctions_entry in sanction_entries:
-            entry_event = sanctions_entry.find(c.tree_prefix + 'EntryEvent')
-            if entry_event.attrib.get('EntryEventTypeID') == '1':
-                FixedRef = sanctions_entry.attrib.get('ProfileID')
-                # if self.all_parties[FixedRef] in self.all_parties:
-                date_record = entry_event.find(c.tree_prefix + 'Date')
-                year = date_record.find(c.tree_prefix + 'Year').text
-                month = date_record.find(c.tree_prefix + 'Month').text.zfill(2)
-                day = date_record.find(c.tree_prefix + 'Day').text.zfill(2)
-                self.all_parties[FixedRef]['SDNEntryDate'] = year + '-' + month + '-' + day
+            sdn_data = self.__get_SDN_data(sanctions_entry)
+#            entry_event = sanctions_entry.find(c.tree_prefix + 'EntryEvent')
+#            if entry_event.attrib.get('EntryEventTypeID') == '1':
+#                FixedRef = sanctions_entry.attrib.get('ProfileID')
+#                # if self.all_parties[FixedRef] in self.all_parties:
+#                date_record = entry_event.find(c.tree_prefix + 'Date')
+#                year = date_record.find(c.tree_prefix + 'Year').text
+#                month = date_record.find(c.tree_prefix + 'Month').text.zfill(2)
+#                day = date_record.find(c.tree_prefix + 'Day').text.zfill(2)
+            self.all_parties[sdn_data['FixedRef']]['SDNEntryDate'] = sdn_data['SDNEntryDate']
 
-            sanctions_measures = sanctions_entry.findall(c.tree_prefix + 'SanctionsMeasure')
-            programs = None
-            for measure in sanctions_measures:
-                if measure.attrib.get('SanctionsTypeID') == '1':
-                    if not programs:
-                        programs = measure.find(c.tree_prefix + 'Comment').text
-                    else:
-                        programs += ', ' + measure.find(c.tree_prefix + 'Comment').text
-            self.all_parties[FixedRef]["SDNPrograms"] = programs
+#            sanctions_measures = sanctions_entry.findall(c.tree_prefix + 'SanctionsMeasure')
+#            programs = None
+#            for measure in sanctions_measures:
+#                if measure.attrib.get('SanctionsTypeID') == '1':
+#                    if not programs:
+#                        programs = measure.find(c.tree_prefix + 'Comment').text
+##                    else:
+ #                       programs += ', ' + measure.find(c.tree_prefix + 'Comment').text
+            self.all_parties[sdn_data['FixedRef']]["SDNPrograms"] = sdn_data["SDNPrograms"]
+
+
+    def __get_SDN_data(self, sanctions_entry):
+        SDN_data = {}
+        entry_event = sanctions_entry.find(c.tree_prefix + 'EntryEvent')
+        if entry_event.attrib.get('EntryEventTypeID') == '1':
+            SDN_data['FixedRef'] = sanctions_entry.attrib.get('ProfileID')
+            date_record = entry_event.find(pre + 'Date')
+            year = date_record.find(pre + 'Year').text
+            month = date_record.find(pre + 'Month').text.zfill(2)
+            day = date_record.find(pre + 'Day').text.zfill(2)
+            SDN_data['SDNEntryDate'] = year + '-' + month + '-' + day
+
+        sanctions_measures = sanctions_entry.findall(c.tree_prefix + 'SanctionsMeasure')
+        programs = None
+        for measure in sanctions_measures:
+            if measure.attrib.get('SanctionsTypeID') == '1':
+                if not programs:
+                    programs = measure.find(c.tree_prefix + 'Comment').text
+                else:
+                    programs += ', ' + measure.find(c.tree_prefix + 'Comment').text
+        SDN_data["SDNPrograms"] = programs
+        return SDN_data
+

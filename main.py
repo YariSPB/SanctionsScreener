@@ -10,7 +10,8 @@ if __name__ == '__main__':
     xml_r = XmlReader()
     #resu = xml_r.find_by_value('1053300906900')
 
-    distinct_parties = xml_r.get_distinct_entities()
+    #distinct_parties = xml_r.get_distinct_entities()
+    persons = xml_r.get_all_SDN_persons()
     #data_store = DataStore()
     #data_store.insert_new(distinct_parties)
     exit()
