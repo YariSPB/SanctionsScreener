@@ -50,5 +50,30 @@ features_schema = '''feature_id INTEGER PRIMARY KEY,
                 UNIQUE(Value, Entity_ref, Property_ref)
              '''
 
+body_schema = '''id INTEGER PRIMARY KEY,
+                 name TEXT NOT NULL
+              '''
 
+person_schema = '''id INTEGER PRIMARY KEY,
+                   base_id  INTEGER NOT NULL,
+                   gender TEXT,
+                   birth_date TEXT,
+                   nationality TEXT,
+                   tax_id TEXT,
+                   FOREIGN KEY (base_id) REFERENCES Body (id)             
+                '''
+
+sdn_schema = '''id INTEGER PRIMARY KEY,
+                base_id  INTEGER NOT NULL,
+                entry_date TEXT,
+                program TEXT,
+                FOREIGN KEY (base_id) REFERENCES Body (id)
+             '''
+
+alias_schema = '''id INTEGER PRIMARY KEY,
+                  base_id  INTEGER NOT NULL,
+                  name TEXT NOT NULL,
+                  lang TEXT,
+                  FOREIGN KEY (base_id) REFERENCES Body (id)
+'''
 

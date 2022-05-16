@@ -5,6 +5,7 @@ from entities import *
 tax_id_ref = '1596'
 pre = c.tree_prefix
 
+
 class XmlReader:
     def __init__(self):
         self.tree = ET.parse(c.curr_dir + c.raw_data_dir + '/' + c.raw_xml_name)
@@ -15,6 +16,8 @@ class XmlReader:
         self.SDN_Persons = {}
         self.countries = {}
         self.IDRegDocTypes = {}
+        self.reg_data = {}
+        self.__get_all_reg_data()
 
     def find_by_value(self, str):
         value = self.root.findall(f".//*[.='{str}']")
@@ -76,8 +79,6 @@ class XmlReader:
             self.SDN_Persons[key] = sdn_person
         pass
 
-
-
     def find_persons(self):
         distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
         for entry in distinct_parties:
@@ -90,15 +91,14 @@ class XmlReader:
                 entity_type = c.Entity.INDIVIDUAL
                 self.__append_person(entry)
 
-
-
     def __append_person(self, entry):
         person = Person()
         fixed_ref = entry.attrib.get('FixedRef')
         profile = entry.find(c.tree_prefix + 'Profile')
         identity = profile.find(c.tree_prefix + 'Identity')
         identity_id = identity.attrib.get('ID')
-        person.tax_id = self.__get_reg_id(identity_id)
+        #person.tax_id = self.__get_reg_id(identity_id)
+        person.tax_id = self.__get_person_reg_id(identity_id)
         aliases = identity.findall(c.tree_prefix + 'Alias')
         alias_dict = self.__get__aliases(aliases)
         person.primary_name = alias_dict['Primary']
@@ -108,18 +108,18 @@ class XmlReader:
         features = profile.findall(c.tree_prefix + 'Feature')
         for feature in features:
             if feature.attrib.get('FeatureTypeID') == '8':
-                #get DOB
-                #feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
-                #date_period = feature_version.find(c.tree_prefix + 'DatePeriod')
-                #start_date = date_period.find(c.tree_prefix + 'Start')
-                #from_date = start_date.find(c.tree_prefix + 'From')
+                # get DOB
+                # feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
+                # date_period = feature_version.find(c.tree_prefix + 'DatePeriod')
+                # start_date = date_period.find(c.tree_prefix + 'Start')
+                # from_date = start_date.find(c.tree_prefix + 'From')
                 from_date = feature.find(f"{pre}FeatureVersion/{pre}DatePeriod/{pre}Start/{pre}From")
                 year = from_date.find(pre + 'Year').text
                 month = from_date.find(pre + 'Month').text.zfill(2)
                 day = from_date.find(pre + 'Day').text.zfill(2)
                 person.birth_date = year + '-' + month + '-' + day
             elif feature.attrib.get('FeatureTypeID') == '224':
-                #gender
+                # gender
                 feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
                 version_detail = feature.find(f"{pre}FeatureVersion/{pre}VersionDetail")
                 if version_detail.attrib.get('DetailReferenceID') == '91526':
@@ -127,28 +127,34 @@ class XmlReader:
                 elif version_detail.attrib.get('DetailReferenceID') == '91527':
                     person.gender = 'Female'
             elif feature.attrib.get('FeatureTypeID') == '10':
-                #nationality country
+                # nationality country
                 feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
                 version_detail = feature_version.find(c.tree_prefix + 'VersionDetail')
                 if version_detail.attrib.get('DetailTypeID') == '1433':
-                    #country only
+                    # country only
                     version_location = feature_version.find(c.tree_prefix + 'VersionLocation')
                     location_id = version_location.attrib.get('LocationID')
                     person.nationality = self.__get_nationality(location_id)
 
-        #if person.tax_id:
+        # if person.tax_id:
         #    print (person.tax_id)
         self.persons[fixed_ref] = person
 
+    def __get_person_reg_id(self, identity_id):
+        if identity_id in self.reg_data:
+            return self.reg_data[identity_id][0][1]
+        return None
+
     def __get_reg_id(self, identity_id):
-        reg_records = self.root.findall(f"{c.tree_prefix}IDRegDocuments/{c.tree_prefix}IDRegDocument[@IdentityID='{identity_id}']")
+        reg_records = self.root.findall(
+            f"{c.tree_prefix}IDRegDocuments/{c.tree_prefix}IDRegDocument[@IdentityID='{identity_id}']")
         if not reg_records:
             return None
         return reg_records[0].find(f"{c.tree_prefix}IDRegistrationNo").text
 
-
     def __get_reg_data(self, identity_id):
-        reg_records = self.root.findall(f"{c.tree_prefix}IDRegDocuments/{c.tree_prefix}IDRegDocument[@IdentityID='{identity_id}']") # and @IDRegDocTypeID='{tax_id_ref}']")
+        reg_records = self.root.findall(
+            f"{c.tree_prefix}IDRegDocuments/{c.tree_prefix}IDRegDocument[@IdentityID='{identity_id}']")  # and @IDRegDocTypeID='{tax_id_ref}']")
         if not reg_records:
             return None
         records = {}
@@ -156,13 +162,27 @@ class XmlReader:
             IDRegDocTypeID = record.attrib.get('IDRegDocTypeID')
             registration_type = self.IDRegDocTypes.get(IDRegDocTypeID)
             if not registration_type:
-                registration_type = self.root.find(f"{c.tree_prefix}ReferenceValueSets/{c.tree_prefix}IDRegDocTypeValues/{c.tree_prefix}IDRegDocType[@ID='{IDRegDocTypeID}']").text
+                registration_type = self.root.find(
+                    f"{c.tree_prefix}ReferenceValueSets/{c.tree_prefix}IDRegDocTypeValues/{c.tree_prefix}IDRegDocType[@ID='{IDRegDocTypeID}']").text
                 self.IDRegDocTypes[IDRegDocTypeID] = registration_type
             IDRegistrationDoc = record.find(f"{c.tree_prefix}IDRegistrationNo").text
             records[registration_type] = IDRegistrationDoc
         return records
 
-
+    def __get_all_reg_data(self):
+        IDREgDocuments = self.root.find(pre + 'IDRegDocuments')
+        for reg_doc in IDREgDocuments:
+            identity = reg_doc.attrib.get('IdentityID')
+            if identity not in self.reg_data:
+                self.reg_data[identity] = []
+            IDRegDocTypeID = reg_doc.attrib.get('IDRegDocTypeID')
+            registration_type = self.IDRegDocTypes.get(IDRegDocTypeID)
+            if not registration_type:
+                registration_type = self.root.find(
+                    f"{pre}ReferenceValueSets/{pre}IDRegDocTypeValues/{pre}IDRegDocType[@ID='{IDRegDocTypeID}']").text
+                self.IDRegDocTypes[IDRegDocTypeID] = registration_type
+            IDRegistrationDoc = reg_doc.find(f"{c.tree_prefix}IDRegistrationNo").text
+            self.reg_data[identity].append((registration_type, IDRegistrationDoc))
 
     def __get_nationality(self, location_id):
         if location_id in self.countries:
@@ -172,7 +192,6 @@ class XmlReader:
         value = location.find(f".//{c.tree_prefix}Value").text
         self.countries[location_id] = value
         return value
-
 
     def __get__aliases(self, alias_nodes):
         aliases = {"Primary": None, "Secondary_latin": [], "Secondary_cyrillic": []}
@@ -206,41 +225,35 @@ class XmlReader:
             full_name.append(name_part_holder.find(c.tree_prefix + 'NamePartValue').text)
         return ' '.join(full_name)
 
-
-
-
     def __collect_SDN_data(self):
         sanction_entries = self.root.find(c.tree_prefix + 'SanctionsEntries')
         for sanctions_entry in sanction_entries:
             sdn_data = self.__get_SDN_data(sanctions_entry)
             self.SDN_data[sdn_data['FixedRef']] = sdn_data
 
-
-
     def __append_sanctions_data(self):
         sanction_entries = self.root.find(c.tree_prefix + 'SanctionsEntries')
         for sanctions_entry in sanction_entries:
             sdn_data = self.__get_SDN_data(sanctions_entry)
-#            entry_event = sanctions_entry.find(c.tree_prefix + 'EntryEvent')
-#            if entry_event.attrib.get('EntryEventTypeID') == '1':
-#                FixedRef = sanctions_entry.attrib.get('ProfileID')
-#                # if self.all_parties[FixedRef] in self.all_parties:
-#                date_record = entry_event.find(c.tree_prefix + 'Date')
-#                year = date_record.find(c.tree_prefix + 'Year').text
-#                month = date_record.find(c.tree_prefix + 'Month').text.zfill(2)
-#                day = date_record.find(c.tree_prefix + 'Day').text.zfill(2)
+            #            entry_event = sanctions_entry.find(c.tree_prefix + 'EntryEvent')
+            #            if entry_event.attrib.get('EntryEventTypeID') == '1':
+            #                FixedRef = sanctions_entry.attrib.get('ProfileID')
+            #                # if self.all_parties[FixedRef] in self.all_parties:
+            #                date_record = entry_event.find(c.tree_prefix + 'Date')
+            #                year = date_record.find(c.tree_prefix + 'Year').text
+            #                month = date_record.find(c.tree_prefix + 'Month').text.zfill(2)
+            #                day = date_record.find(c.tree_prefix + 'Day').text.zfill(2)
             self.all_parties[sdn_data['FixedRef']]['SDNEntryDate'] = sdn_data['SDNEntryDate']
 
-#            sanctions_measures = sanctions_entry.findall(c.tree_prefix + 'SanctionsMeasure')
-#            programs = None
-#            for measure in sanctions_measures:
-#                if measure.attrib.get('SanctionsTypeID') == '1':
-#                    if not programs:
-#                        programs = measure.find(c.tree_prefix + 'Comment').text
-##                    else:
- #                       programs += ', ' + measure.find(c.tree_prefix + 'Comment').text
+            #            sanctions_measures = sanctions_entry.findall(c.tree_prefix + 'SanctionsMeasure')
+            #            programs = None
+            #            for measure in sanctions_measures:
+            #                if measure.attrib.get('SanctionsTypeID') == '1':
+            #                    if not programs:
+            #                        programs = measure.find(c.tree_prefix + 'Comment').text
+            ##                    else:
+            #                       programs += ', ' + measure.find(c.tree_prefix + 'Comment').text
             self.all_parties[sdn_data['FixedRef']]["SDNPrograms"] = sdn_data["SDNPrograms"]
-
 
     def __get_SDN_data(self, sanctions_entry):
         SDN_data = {}
@@ -263,4 +276,3 @@ class XmlReader:
                     programs += ', ' + measure.find(c.tree_prefix + 'Comment').text
         SDN_data["SDNPrograms"] = programs
         return SDN_data
-

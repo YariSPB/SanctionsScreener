@@ -16,6 +16,11 @@ class DataStore:
         self.cur = self.con.cursor()
         self.__setup_property_table()
         self.__setup_feature_table()
+        self.__setup_body_tb()
+        self.__setup_person_tb()
+        self.__setup_SDN_tb()
+        self.__setup_alias_tb()
+        self.commit()
 
     def export_sdn_csv(self):
         data = self.cur.execute("SELECT * FROM SDNParty").fetchall()
@@ -115,4 +120,24 @@ class DataStore:
 
     def __setup_feature_table(self):
         self.cur.execute('CREATE TABLE IF NOT EXISTS Features (' + c.features_schema + ')')
+        #self.con.commit()
+
+    def __setup_body_tb(self):
+        self.cur.execute('CREATE TABLE IF NOT EXISTS Body (' + c.body_schema + ')')
+        #self.con.commit()
+
+    def __setup_person_tb(self):
+        self.cur.execute('CREATE TABLE IF NOT EXISTS Person (' + c.person_schema + ')')
+        #self.con.commit()
+
+    def __setup_SDN_tb(self):
+        self.cur.execute('CREATE TABLE IF NOT EXISTS SDN (' + c.sdn_schema + ')')
+        #self.con.commit()
+
+    def __setup_alias_tb(self):
+        self.cur.execute('CREATE TABLE IF NOT EXISTS Alias (' + c.alias_schema + ')')
+        #self.con.commit()
+
+    def commit(self):
         self.con.commit()
+
