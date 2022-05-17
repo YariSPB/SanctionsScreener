@@ -16,7 +16,7 @@ class DataStore:
         self.cur = self.con.cursor()
         self.__setup_property_table()
         self.__setup_feature_table()
-        self.__setup_base_entity_tb()
+        self.__setup_identity_tb()
         self.__setup_person_tb()
         self.__setup_SDN_tb()
         self.__setup_alias_tb()
@@ -124,8 +124,8 @@ class DataStore:
         self.cur.execute('CREATE TABLE IF NOT EXISTS Features (' + c.features_schema + ')')
         #self.con.commit()
 
-    def __setup_base_entity_tb(self):
-        self.cur.execute('CREATE TABLE IF NOT EXISTS BaseEntity (' + c.base_entity_schema + ')')
+    def __setup_identity_tb(self):
+        self.cur.execute('CREATE TABLE IF NOT EXISTS Identity (' + c.identity_schema + ')')
         #self.con.commit()
 
     def __setup_person_tb(self):
@@ -156,12 +156,12 @@ class DataStore:
         record = self.cur.execute(f'SELECT id FROM SDN WHERE id = {sdn_person.sdn_id}')
         if record.fetchone():
             return
-        record = self.cur.execute(f'SELECT id FROM BaseEntity WHERE name = "{sdn_person.person.primary_name}"')
+        record = self.cur.execute(f'SELECT id FROM Identity WHERE name = "{sdn_person.person.primary_name}"')
         if record.fetchone():
             return
 
-        query = "INSERT INTO BaseEntity (name) VALUES (?)"
-        push = 'INSERT INTO BaseEntity (name) VALUES ("{}")'.format(sdn_person.person.primary_name)
+        query = "INSERT INTO Identity (name) VALUES (?)"
+        push = 'INSERT INTO Identity (name) VALUES ("{}")'.format(sdn_person.person.primary_name)
         self.cur.execute(push)
 
 
