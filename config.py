@@ -50,7 +50,7 @@ features_schema = '''feature_id INTEGER PRIMARY KEY,
                 UNIQUE(Value, Entity_ref, Property_ref)
              '''
 
-body_schema = '''id INTEGER PRIMARY KEY,
+base_entity_schema = '''id INTEGER PRIMARY KEY,
                  name TEXT NOT NULL
               '''
 

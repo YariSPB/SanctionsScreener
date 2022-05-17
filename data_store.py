@@ -16,7 +16,7 @@ class DataStore:
         self.cur = self.con.cursor()
         self.__setup_property_table()
         self.__setup_feature_table()
-        self.__setup_body_tb()
+        self.__setup_base_entity_tb()
         self.__setup_person_tb()
         self.__setup_SDN_tb()
         self.__setup_alias_tb()
@@ -61,6 +61,8 @@ class DataStore:
         for key in distinct_parties:
             self.__insert_entity(distinct_parties[key])
         self.con.commit()
+
+
 
     def __insert_entity(self, entity):
         insert_command = '''INSERT OR IGNORE INTO SDNParty (
@@ -122,8 +124,8 @@ class DataStore:
         self.cur.execute('CREATE TABLE IF NOT EXISTS Features (' + c.features_schema + ')')
         #self.con.commit()
 
-    def __setup_body_tb(self):
-        self.cur.execute('CREATE TABLE IF NOT EXISTS Body (' + c.body_schema + ')')
+    def __setup_base_entity_tb(self):
+        self.cur.execute('CREATE TABLE IF NOT EXISTS BaseEntity (' + c.base_entity_schema + ')')
         #self.con.commit()
 
     def __setup_person_tb(self):
@@ -140,4 +142,34 @@ class DataStore:
 
     def commit(self):
         self.con.commit()
+
+
+    def insert_sdn_persons(self, persons):
+        for key in persons:
+            self.insert_sdn_person(persons[key])
+        self.commit()
+
+
+    def insert_sdn_person(self, sdn_person):
+        if not sdn_person:
+            return
+        record = self.cur.execute(f'SELECT id FROM SDN WHERE id = {sdn_person.sdn_id}')
+        if record.fetchone():
+            return
+        record = self.cur.execute(f'SELECT id FROM BaseEntity WHERE name = "{sdn_person.person.primary_name}"')
+        if record.fetchone():
+            return
+
+        query = "INSERT INTO BaseEntity (name) VALUES (?)"
+        push = 'INSERT INTO BaseEntity (name) VALUES ("{}")'.format(sdn_person.person.primary_name)
+        self.cur.execute(push)
+
+
+
+
+
+
+
+
+
 

@@ -99,8 +99,8 @@ class XmlReader:
         identity_id = identity.attrib.get('ID')
         #person.tax_id = self.__get_reg_id(identity_id)
         person.tax_id = self.__get_person_reg_id(identity_id)
-        aliases = identity.findall(c.tree_prefix + 'Alias')
-        alias_dict = self.__get__aliases(aliases)
+        #aliases = identity.findall(c.tree_prefix + 'Alias')
+        alias_dict = self.__get__aliases(identity)
         person.primary_name = alias_dict['Primary']
         person.secondary_latin = alias_dict['Secondary_latin']
         person.secondary_cyrillic = alias_dict['Secondary_cyrillic']
@@ -136,8 +136,6 @@ class XmlReader:
                     location_id = version_location.attrib.get('LocationID')
                     person.nationality = self.__get_nationality(location_id)
 
-        # if person.tax_id:
-        #    print (person.tax_id)
         self.persons[fixed_ref] = person
 
     def __get_person_reg_id(self, identity_id):
@@ -193,29 +191,30 @@ class XmlReader:
         self.countries[location_id] = value
         return value
 
-    def __get__aliases(self, alias_nodes):
+    def __get__aliases(self, identity):
         aliases = {"Primary": None, "Secondary_latin": [], "Secondary_cyrillic": []}
-        for alias in alias_nodes:
-            name_temp = []
+        primary_documented_name = identity.find(f".//{pre}DocumentedName[@DocNameStatusID='1']")
+        primary = []
+        for documented_name_part in primary_documented_name:
+            for name_part in documented_name_part:
+                primary.append(name_part.text)
+        aliases['Primary'] = ' '.join(primary)
+
+        for alias in identity.findall(pre + 'Alias'):
             for documented_name in alias:
-                for documented_name_part in documented_name:
-                    for name_part in documented_name_part:
-                        if name_part.attrib.get('ScriptID') == "215":
-                            script = 'Latin'
-                        elif name_part.attrib.get('ScriptID') == "220":
-                            script = 'Cyrillic'
-                        else:
-                            script = 'Else'
-                        name_temp.append(name_part.text)
-
-            if alias.attrib.get('Primary') == 'false':
-                if script == 'Cyrillic':
-                    aliases["Secondary_cyrillic"].append(' '.join(name_temp))
-                elif script == 'Latin':
-                    aliases["Secondary_latin"].append(' '.join(name_temp))
-            else:
-                aliases['Primary'] = ' '.join(name_temp)
-
+                fullname_latin = []
+                fullname_cyrillic = []
+                if documented_name.attrib.get('DocNameStatusID') == '2':
+                    for documented_name_part in documented_name:
+                        for name_part in documented_name_part:
+                            if name_part.attrib.get('ScriptID') == "215":
+                                fullname_latin.append(name_part.text)
+                            elif name_part.attrib.get('ScriptID') == "220":
+                                fullname_cyrillic.append(name_part.text)
+                    if fullname_latin:
+                        aliases["Secondary_latin"].append(' '.join(fullname_latin))
+                    elif fullname_cyrillic:
+                        aliases["Secondary_cyrillic"].append(' '.join(fullname_cyrillic))
         return aliases
 
     def __get_full_name(self, name_container):
