@@ -163,6 +163,32 @@ class DataStore:
         query = "INSERT INTO Identity (name) VALUES (?)"
         push = 'INSERT INTO Identity (name) VALUES ("{}")'.format(sdn_person.person.primary_name)
         self.cur.execute(push)
+        identity_id = self.cur.lastrowid
+
+        person_query = '''INSERT INTO Person (
+                       base_id, 
+                       gender,
+                       birth_date,
+                       nationality,
+                       tax_id)
+                       VALUES (?,?,?,?,?)
+                       '''
+
+        person_data = (identity_id, \
+                      sdn_person.person.gender, \
+                      sdn_person.person.birth_date, \
+                      sdn_person.person.nationality, \
+                      sdn_person.person.tax_id, \
+                      )
+        self.con.execute(person_query, person_data)
+
+
+
+
+
+
+
+
 
 
 

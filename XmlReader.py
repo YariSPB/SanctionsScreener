@@ -18,6 +18,7 @@ class XmlReader:
         self.IDRegDocTypes = {}
         self.reg_data = {}
         self.__get_all_reg_data()
+        self.__collect_SDN_data()
 
     def find_by_value(self, str):
         value = self.root.findall(f".//*[.='{str}']")
@@ -71,7 +72,7 @@ class XmlReader:
 
     def get_all_SDN_persons(self):
         self.find_persons()
-        self.__collect_SDN_data()
+        #self.__collect_SDN_data()
         for key in self.persons:
             sdn_record = self.SDN_data[key]
             person = self.persons[key]
