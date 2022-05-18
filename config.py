@@ -73,7 +73,7 @@ sdn_schema = '''id INTEGER PRIMARY KEY,
 alias_schema = '''id INTEGER PRIMARY KEY,
                   base_id  INTEGER NOT NULL,
                   name TEXT NOT NULL,
-                  lang TEXT,
+                  script TEXT,
                   FOREIGN KEY (base_id) REFERENCES Body (id)
 '''
 

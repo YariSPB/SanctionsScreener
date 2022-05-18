@@ -192,3 +192,25 @@ class DataStore:
                     sdn_person.programs
                     )
         self.con.execute(sdn_query, sdn_data)
+
+        for alias in sdn_person.person.secondary_latin:
+            alias_query = '''INSERT INTO Alias (
+                           base_id, 
+                           name,
+                           script)
+                           VALUES (?,?,?)
+                           '''
+
+            alias_data = (identity_id, alias, 'latin')
+            self.cur.execute(alias_query, alias_data)
+
+        for alias in sdn_person.person.secondary_cyrillic:
+            alias_query = '''INSERT INTO Alias (
+                           base_id, 
+                           name,
+                           script)
+                           VALUES (?,?,?)
+                           '''
+
+            alias_data = (identity_id, alias, 'cyrillic')
+            self.cur.execute(alias_query, alias_data)
