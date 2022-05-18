@@ -62,8 +62,6 @@ class DataStore:
             self.__insert_entity(distinct_parties[key])
         self.con.commit()
 
-
-
     def __insert_entity(self, entity):
         insert_command = '''INSERT OR IGNORE INTO SDNParty (
                        FixedRef, 
@@ -122,33 +120,31 @@ class DataStore:
 
     def __setup_feature_table(self):
         self.cur.execute('CREATE TABLE IF NOT EXISTS Features (' + c.features_schema + ')')
-        #self.con.commit()
+        # self.con.commit()
 
     def __setup_identity_tb(self):
         self.cur.execute('CREATE TABLE IF NOT EXISTS Identity (' + c.identity_schema + ')')
-        #self.con.commit()
+        # self.con.commit()
 
     def __setup_person_tb(self):
         self.cur.execute('CREATE TABLE IF NOT EXISTS Person (' + c.person_schema + ')')
-        #self.con.commit()
+        # self.con.commit()
 
     def __setup_SDN_tb(self):
         self.cur.execute('CREATE TABLE IF NOT EXISTS SDN (' + c.sdn_schema + ')')
-        #self.con.commit()
+        # self.con.commit()
 
     def __setup_alias_tb(self):
         self.cur.execute('CREATE TABLE IF NOT EXISTS Alias (' + c.alias_schema + ')')
-        #self.con.commit()
+        # self.con.commit()
 
     def commit(self):
         self.con.commit()
-
 
     def insert_sdn_persons(self, persons):
         for key in persons:
             self.insert_sdn_person(persons[key])
         self.commit()
-
 
     def insert_sdn_person(self, sdn_person):
         if not sdn_person:
@@ -175,27 +171,24 @@ class DataStore:
                        '''
 
         person_data = (identity_id, \
-                      sdn_person.person.gender, \
-                      sdn_person.person.birth_date, \
-                      sdn_person.person.nationality, \
-                      sdn_person.person.tax_id, \
-                      )
+                       sdn_person.person.gender, \
+                       sdn_person.person.birth_date, \
+                       sdn_person.person.nationality, \
+                       sdn_person.person.tax_id, \
+                       )
         self.con.execute(person_query, person_data)
 
+        sdn_query = '''INSERT INTO SDN (
+                       id,
+                       base_id, 
+                       entry_date,
+                       program)
+                       VALUES (?,?,?,?)
+                       '''
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        sdn_data = (sdn_person.sdn_id,
+                    identity_id,
+                    sdn_person.date,
+                    sdn_person.programs
+                    )
+        self.con.execute(sdn_query, sdn_data)
