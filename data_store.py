@@ -49,6 +49,33 @@ class DataStore:
             print(str(e))
             exit()
 
+    def print_sdn_csv(self):
+        data = self.cur.execute("SELECT * FROM SDNParty").fetchall()
+        try:
+            with open(c.curr_dir + c.export_dir + "/" + c.SDN_SCV, 'w', newline='', encoding="utf-8") as f:
+                writer = csv.writer(f)
+                header = [ \
+                    'FixedRef', \
+                    'PrimaryName', \
+                    'EntityType', \
+                    'SDNStatus', \
+                    'SDNEntryDate', \
+                    'SDNPrograms', \
+                    'Alias']
+                writer.writerow(header)
+                for item in data:
+                    line = [item[0], \
+                            item[1], \
+                            c.get_entity_str(item[2]), \
+                            'Yes' if item[3] == 1 else 'No', \
+                            item[4], \
+                            item[5],
+                            item[6]]
+                    writer.writerow(line)
+        except Exception as e:
+            print(str(e))
+            exit()
+
     def get_latest_entry_date(self):
         db_entry = self.cur.execute('SELECT MAX(SDNEntryDate) FROM SDNParty')
         result = db_entry.fetchone()
@@ -157,8 +184,9 @@ class DataStore:
             return
 
         query = "INSERT INTO Identity (name) VALUES (?)"
-        push = 'INSERT INTO Identity (name) VALUES ("{}")'.format(sdn_person.person.primary_name)
-        self.cur.execute(push)
+        push = 'INSERT INTO Identity (name,type) VALUES (?,?)'
+        p_tuple = (sdn_person.person.primary_name, 'Person')
+        self.cur.execute(push, p_tuple)
         identity_id = self.cur.lastrowid
 
         person_query = '''INSERT INTO Person (

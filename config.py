@@ -51,7 +51,8 @@ features_schema = '''feature_id INTEGER PRIMARY KEY,
              '''
 
 identity_schema = '''id INTEGER PRIMARY KEY,
-                 name TEXT NOT NULL
+                 name TEXT NOT NULL,
+                 type TEXT NOT NULL
               '''
 
 person_schema = '''id INTEGER PRIMARY KEY,
