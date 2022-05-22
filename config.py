@@ -56,25 +56,25 @@ identity_schema = '''id INTEGER PRIMARY KEY,
               '''
 
 person_schema = '''id INTEGER PRIMARY KEY,
-                   base_id  INTEGER NOT NULL,
+                   identity_id  INTEGER NOT NULL,
                    gender TEXT,
                    birth_date TEXT,
                    nationality TEXT,
                    tax_id TEXT,
-                   FOREIGN KEY (base_id) REFERENCES Body (id)             
+                   FOREIGN KEY (identity_id) REFERENCES Identity (id)             
                 '''
 
 sdn_schema = '''id INTEGER PRIMARY KEY,
-                base_id  INTEGER NOT NULL,
+                identity_id  INTEGER NOT NULL,
                 entry_date TEXT,
                 program TEXT,
-                FOREIGN KEY (base_id) REFERENCES Body (id)
+                FOREIGN KEY (identity_id) REFERENCES Identity (id)
              '''
 
 alias_schema = '''id INTEGER PRIMARY KEY,
-                  base_id  INTEGER NOT NULL,
+                  identity_id  INTEGER NOT NULL,
                   name TEXT NOT NULL,
                   script TEXT,
-                  FOREIGN KEY (base_id) REFERENCES Body (id)
+                  FOREIGN KEY (identity_id) REFERENCES Identity (id)
 '''
 

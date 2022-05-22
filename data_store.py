@@ -50,31 +50,63 @@ class DataStore:
             exit()
 
     def print_sdn_csv(self):
-        data = self.cur.execute("SELECT * FROM SDNParty").fetchall()
+        query = '''SELECT s.id,
+                      s.entry_date,
+                      s.program,
+                      i.name,
+                      i.type,
+                      p.gender,
+                      p.birth_date,
+                      p.nationality,
+                      p.tax_id
+                   FROM SDN s
+                   INNER JOIN Identity i
+                      ON i.id = s.identity_id
+                   INNER JOIN Person p
+                      ON p.identity_id = s.identity_id;
+                '''
+        data = self.cur.execute(query).fetchall()
         try:
             with open(c.curr_dir + c.export_dir + "/" + c.SDN_SCV, 'w', newline='', encoding="utf-8") as f:
                 writer = csv.writer(f)
                 header = [ \
                     'FixedRef', \
+                    'SDNEntryDate', \
+                    'SDNProgram', \
                     'PrimaryName', \
                     'EntityType', \
-                    'SDNStatus', \
-                    'SDNEntryDate', \
-                    'SDNPrograms', \
-                    'Alias']
+                    'Gender',
+                     'BirthDate',
+                     'Nationality',
+                     'TaxID',
+                    'Comment']
                 writer.writerow(header)
                 for item in data:
+                    comment = []
+                    if item[5]:
+                        comment.append(f'Gender {item[5]}')
+                    if item[6]:
+                        comment.append(f'BirthDate {item[6]}')
+                    if item[7]:
+                        comment.append(f'Nationality {item[7]}')
+                    if item[8]:
+                        comment.append(f'TaxID {item[8]}')
                     line = [item[0], \
                             item[1], \
-                            c.get_entity_str(item[2]), \
-                            'Yes' if item[3] == 1 else 'No', \
-                            item[4], \
+                            item[2], \
+                            item[3], \
+                            item[4],
                             item[5],
-                            item[6]]
+                            item[6],
+                            item[7],
+                            item[8],
+                            '; '.join(comment)]
                     writer.writerow(line)
         except Exception as e:
             print(str(e))
             exit()
+
+    #self.__compile_comment(item)
 
     def get_latest_entry_date(self):
         db_entry = self.cur.execute('SELECT MAX(SDNEntryDate) FROM SDNParty')
@@ -190,7 +222,7 @@ class DataStore:
         identity_id = self.cur.lastrowid
 
         person_query = '''INSERT INTO Person (
-                       base_id, 
+                       identity_id, 
                        gender,
                        birth_date,
                        nationality,
@@ -208,7 +240,7 @@ class DataStore:
 
         sdn_query = '''INSERT INTO SDN (
                        id,
-                       base_id, 
+                       identity_id, 
                        entry_date,
                        program)
                        VALUES (?,?,?,?)
@@ -223,7 +255,7 @@ class DataStore:
 
         for alias in sdn_person.person.secondary_latin:
             alias_query = '''INSERT INTO Alias (
-                           base_id, 
+                           identity_id, 
                            name,
                            script)
                            VALUES (?,?,?)
@@ -234,7 +266,7 @@ class DataStore:
 
         for alias in sdn_person.person.secondary_cyrillic:
             alias_query = '''INSERT INTO Alias (
-                           base_id, 
+                           identity_id, 
                            name,
                            script)
                            VALUES (?,?,?)

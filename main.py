@@ -13,8 +13,9 @@ if __name__ == '__main__':
     #distinct_parties = xml_r.get_distinct_entities()
     persons = xml_r.get_all_SDN_persons()
     data_store = DataStore()
-    data_store.insert_sdn_persons(xml_r.SDN_Persons)
+    #data_store.insert_sdn_persons(xml_r.SDN_Persons)
     #data_store.insert_new(distinct_parties)
+    data_store.print_sdn_csv()
     exit()
 
     #main
