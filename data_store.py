@@ -50,9 +50,15 @@ class DataStore:
             exit()
 
     def print_sdn_csv(self):
+        #sdn_id_tpl = self.cur.execute('SELECT id FROM SDN').fetchall()
+        #sdn_id = []
+        #for tpl in sdn_id_tpl:
+         #   sdn_id.append(tpl[0])
+
         query = '''SELECT s.id,
                       s.entry_date,
                       s.program,
+                      s.identity_id,
                       i.name,
                       i.type,
                       p.gender,
@@ -66,6 +72,19 @@ class DataStore:
                       ON p.identity_id = s.identity_id;
                 '''
         data = self.cur.execute(query).fetchall()
+
+        identity_ids = []
+        for tpl in data:
+            identity_ids.append(str(tpl[3]))
+        identity_ids_str = ', '.join(identity_ids)
+
+        alias_query = f'''SELECT a.id, a.name, a.script
+                         FROM Alias a
+                         WHERE a.identity_id IN ({identity_ids_str});
+                      '''
+        aliases = self.cur.execute(alias_query).fetchall()
+        b= 6
+
         try:
             with open(c.curr_dir + c.export_dir + "/" + c.SDN_SCV, 'w', newline='', encoding="utf-8") as f:
                 writer = csv.writer(f)
@@ -83,23 +102,23 @@ class DataStore:
                 writer.writerow(header)
                 for item in data:
                     comment = []
-                    if item[5]:
-                        comment.append(f'Gender {item[5]}')
                     if item[6]:
-                        comment.append(f'BirthDate {item[6]}')
+                        comment.append(f'Gender {item[6]}')
                     if item[7]:
-                        comment.append(f'Nationality {item[7]}')
+                        comment.append(f'BirthDate {item[7]}')
                     if item[8]:
-                        comment.append(f'TaxID {item[8]}')
+                        comment.append(f'Nationality {item[8]}')
+                    if item[9]:
+                        comment.append(f'TaxID {item[9]}')
                     line = [item[0], \
                             item[1], \
                             item[2], \
-                            item[3], \
-                            item[4],
+                            item[4], \
                             item[5],
                             item[6],
                             item[7],
                             item[8],
+                            item[9],
                             '; '.join(comment)]
                     writer.writerow(line)
         except Exception as e:
