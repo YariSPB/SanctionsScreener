@@ -15,6 +15,12 @@ SDN_SCV = 'SDN.csv'
 tree_prefix = '{http://www.un.org/sanctions/1.0}'
 
 
+class Script(Enum):
+    latin = 1,
+    cyrillic = 2
+
+
+
 class Entity(Enum):
     INDIVIDUAL = 1
     ENTITY = 2

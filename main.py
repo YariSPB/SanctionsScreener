@@ -2,12 +2,14 @@ import pathlib
 import os
 from XmlReader import *
 from screener import *
+from Exporter import *
+import sqlite3
 
 
 if __name__ == '__main__':
     print("SDN Screener started.")
-
-    xml_r = XmlReader()
+    #print(sqlite3.)
+    #xml_r = XmlReader()
     #resu = xml_r.find_by_value('1053300906900')
 
     #distinct_parties = xml_r.get_distinct_entities()
@@ -15,6 +17,11 @@ if __name__ == '__main__':
     data_store = DataStore()
     #data_store.insert_sdn_persons(xml_r.SDN_Persons)
     #data_store.insert_new(distinct_parties)
+    #sdn_persons = data_store.get_SDN_persons()
+    exporter = Exporter(data_store)
+    export_sdn_persons = exporter.export_sdn_csv()
+    ss=5
+    exit()
     data_store.print_sdn_csv()
     exit()
 

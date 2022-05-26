@@ -3,6 +3,7 @@ import sqlite3
 import config as c
 import pathlib
 import csv
+from entities import *
 
 
 class DataStore:
@@ -48,6 +49,56 @@ class DataStore:
         except Exception as e:
             print(str(e))
             exit()
+
+    def get_SDN_persons(self):
+        sdn_persons = {}
+        query = '''SELECT s.id,
+                      s.entry_date,
+                      s.program,
+                      s.identity_id,
+                      i.name,
+                      i.type,
+                      p.gender,
+                      p.birth_date,
+                      p.nationality,
+                      p.tax_id
+                   FROM SDN s
+                   INNER JOIN Identity i
+                      ON i.id = s.identity_id
+                   INNER JOIN Person p
+                      ON p.identity_id = s.identity_id;
+                '''
+        persons_list = self.cur.execute(query).fetchall()
+
+        for record in persons_list:
+            person = Person()
+            person.primary_name = record[4]
+            person.gender = record[6]
+            person.birth_date = record[7]
+            person.nationality = record[8]
+            person.tax_id = record[9]
+            person.unique_id = record[3]
+            sdn_person = SDN_Person(person, record[0], record[1], record[2])
+            sdn_persons[record[3]] = sdn_person
+
+
+        identity_ids = []
+        for tpl in persons_list:
+            identity_ids.append(str(tpl[3]))
+        identity_ids_str = ', '.join(identity_ids)
+
+        alias_query = f'''SELECT a.id, a.identity_id, a.name, a.script
+                         FROM Alias a
+                         WHERE a.identity_id IN ({identity_ids_str});
+                      '''
+        aliases = self.cur.execute(alias_query).fetchall()
+
+        for alias in aliases:
+            tpl = (alias[2], alias[3])
+            sdn_persons[alias[1]].person.aliases.append(tpl)
+        return sdn_persons
+
+
 
     def print_sdn_csv(self):
         #sdn_id_tpl = self.cur.execute('SELECT id FROM SDN').fetchall()
