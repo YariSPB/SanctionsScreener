@@ -70,7 +70,7 @@ class XmlReader:
         self.__append_sanctions_data()
         return self.all_parties
 
-    def get_all_SDN_persons(self):
+    def load_all_SDN_persons(self):
         self.find_persons()
         #self.__collect_SDN_data()
         for key in self.persons:

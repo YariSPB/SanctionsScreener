@@ -3,12 +3,16 @@ from data_store import *
 import config as c
 import pathlib
 from XmlReader import *
+from Exporter import Exporter
+import time
 
 
 class Screener:
     def __init__(self, db: DataStore):
         self.data_store = db
+        self.csv_exporter = Exporter(db)
         self.file_data = []
+        self.ftp_file_data={}
         pathlib.Path(c.curr_dir + c.raw_data_dir).mkdir(exist_ok=True)
 
 
@@ -18,9 +22,9 @@ class Screener:
             exit()
         self.load_SDN_file(c.raw_xml_name)
         xml_r = XmlReader()
-        distinct_parties = xml_r.get_distinct_entities()
-        self.data_store.insert_new(distinct_parties)
-        self.data_store.export_sdn_csv()
+        xml_r.load_all_SDN_persons()
+        self.data_store.insert_sdn_persons(xml_r.SDN_Persons)
+        self.csv_exporter.export_sdn_csv()
 
 
     def new_SDN_published(self):
@@ -42,26 +46,28 @@ class Screener:
         ftp_server.retrlines('LIST', self.__gather_file_data)
         ftp_server.quit()
 
-        for entry in self.file_data:
-            entry_segments = entry.split()
-            if entry_segments[-1] == c.raw_xml_name:
-                print(entry)
-                proposed_date = entry_segments[0]
-                break
+        print(self.file_data)
+
+        proposed_date = self.ftp_file_data[c.raw_xml_name]
 
         if not proposed_date:
             print("Error screening " + c.FOLDER_NAME + c.raw_xml_name + " . Terminating")
             exit()
 
-        stored_max_date = self.data_store.get_latest_entry_date()
+        stored_max_date = self.data_store.get_latest_sdnperson_date()
         if not stored_max_date:
             return True
 
-        if stored_max_date >= proposed_date:
+        db_Date = time.strptime(stored_max_date, "%Y-%m-%d")
+        if db_Date >= proposed_date:
             return False
         return True
 
     def __gather_file_data(self, data_line):
+        str_list = data_line.split()
+        date = time.strptime(str_list[0], "%m-%d-%y")
+        file_name = str_list[-1]
+        self.ftp_file_data[file_name] = date
         self.file_data.append(data_line)
 
     @staticmethod

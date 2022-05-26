@@ -178,6 +178,14 @@ class DataStore:
 
     #self.__compile_comment(item)
 
+    def get_latest_sdnperson_date(self):
+        db_entry = self.cur.execute('SELECT MAX(entry_date) FROM SDN')
+        result = db_entry.fetchone()
+        if result[0]:
+            print('Latest Database SDN record is from: ' + result[0])
+            return result[0]
+        return None
+
     def get_latest_entry_date(self):
         db_entry = self.cur.execute('SELECT MAX(SDNEntryDate) FROM SDNParty')
         result = db_entry.fetchone()

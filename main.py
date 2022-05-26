@@ -15,15 +15,16 @@ if __name__ == '__main__':
     #distinct_parties = xml_r.get_distinct_entities()
     #persons = xml_r.get_all_SDN_persons()
     data_store = DataStore()
+    sdn_service = Screener(data_store)
+    sdn_service.get_new_SDN()
     #data_store.insert_sdn_persons(xml_r.SDN_Persons)
     #data_store.insert_new(distinct_parties)
     #sdn_persons = data_store.get_SDN_persons()
-    exporter = Exporter(data_store)
-    export_sdn_persons = exporter.export_sdn_csv()
+    #exporter = Exporter(data_store)
+    #export_sdn_persons = exporter.export_sdn_csv()
     ss=5
     exit()
-    data_store.print_sdn_csv()
-    exit()
+
 
     #main
     data_store = DataStore()
