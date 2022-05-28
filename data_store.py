@@ -2,21 +2,14 @@ import os
 import sqlite3
 import config as c
 import pathlib
-import csv
 from entities import *
+from DB_schema import DB_schema
 
 
-class DataStore:
+class DataStore(DB_schema):
     def __init__(self):
-        pathlib.Path(c.curr_dir + c.db_dir).mkdir(exist_ok=True)
-        self.con = sqlite3.connect(c.curr_dir + c.db_dir + "/" + c.SDN_DB_name)
-        self.cur = self.con.cursor()
-        self.__setup_identity_tb()
-        self.__setup_person_tb()
-        self.__setup_SDN_tb()
-        self.__setup_alias_tb()
-        self.commit()
-
+        DB_schema.__init__(self)
+        pass
 
     def get_SDN_persons(self):
         sdn_persons = {}
@@ -81,26 +74,6 @@ class DataStore:
             print('Latest Database SDN entry from: ' + result[0])
             return result[0]
         return None
-
-    def __create_SDN_DB(self):
-        con = sqlite3.connect(c.curr_dir + c.db_dir + "/" + c.SDN_DB_name)
-        con.close()
-
-    def __setup_identity_tb(self):
-        self.cur.execute('CREATE TABLE IF NOT EXISTS Identity (' + c.identity_schema + ')')
-        # self.con.commit()
-
-    def __setup_person_tb(self):
-        self.cur.execute('CREATE TABLE IF NOT EXISTS Person (' + c.person_schema + ')')
-        # self.con.commit()
-
-    def __setup_SDN_tb(self):
-        self.cur.execute('CREATE TABLE IF NOT EXISTS SDN (' + c.sdn_schema + ')')
-        # self.con.commit()
-
-    def __setup_alias_tb(self):
-        self.cur.execute('CREATE TABLE IF NOT EXISTS Alias (' + c.alias_schema + ')')
-        # self.con.commit()
 
     def commit(self):
         self.con.commit()
