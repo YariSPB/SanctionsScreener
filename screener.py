@@ -22,7 +22,7 @@ class Screener:
             exit()
         self.load_SDN_file(c.raw_xml_name)
         xml_r = XmlReader()
-        xml_r.load_all_SDN_persons()
+        #xml_r.load_all_SDN_persons()
         self.data_store.insert_sdn_persons(xml_r.SDN_Persons)
         self.csv_exporter.export_sdn_csv()
 

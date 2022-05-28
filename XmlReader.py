@@ -19,6 +19,7 @@ class XmlReader:
         self.reg_data = {}
         self.__get_all_reg_data()
         self.__collect_SDN_data()
+        self.__load_all_SDN_persons()
 
     def find_by_value(self, str):
         value = self.root.findall(f".//*[.='{str}']")
@@ -70,7 +71,10 @@ class XmlReader:
         self.__append_sanctions_data()
         return self.all_parties
 
-    def load_all_SDN_persons(self):
+    def __load_SDN_entities(self):
+        pass
+
+    def __load_all_SDN_persons(self):
         self.find_persons()
         #self.__collect_SDN_data()
         for key in self.persons:
@@ -235,24 +239,7 @@ class XmlReader:
         sanction_entries = self.root.find(c.tree_prefix + 'SanctionsEntries')
         for sanctions_entry in sanction_entries:
             sdn_data = self.__get_SDN_data(sanctions_entry)
-            #            entry_event = sanctions_entry.find(c.tree_prefix + 'EntryEvent')
-            #            if entry_event.attrib.get('EntryEventTypeID') == '1':
-            #                FixedRef = sanctions_entry.attrib.get('ProfileID')
-            #                # if self.all_parties[FixedRef] in self.all_parties:
-            #                date_record = entry_event.find(c.tree_prefix + 'Date')
-            #                year = date_record.find(c.tree_prefix + 'Year').text
-            #                month = date_record.find(c.tree_prefix + 'Month').text.zfill(2)
-            #                day = date_record.find(c.tree_prefix + 'Day').text.zfill(2)
             self.all_parties[sdn_data['FixedRef']]['SDNEntryDate'] = sdn_data['SDNEntryDate']
-
-            #            sanctions_measures = sanctions_entry.findall(c.tree_prefix + 'SanctionsMeasure')
-            #            programs = None
-            #            for measure in sanctions_measures:
-            #                if measure.attrib.get('SanctionsTypeID') == '1':
-            #                    if not programs:
-            #                        programs = measure.find(c.tree_prefix + 'Comment').text
-            ##                    else:
-            #                       programs += ', ' + measure.find(c.tree_prefix + 'Comment').text
             self.all_parties[sdn_data['FixedRef']]["SDNPrograms"] = sdn_data["SDNPrograms"]
 
     def __get_SDN_data(self, sanctions_entry):

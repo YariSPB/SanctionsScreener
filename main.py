@@ -9,7 +9,7 @@ import sqlite3
 if __name__ == '__main__':
     print("SDN Screener started.")
     xml_reader = XmlReader()
-    xml_reader.load_all_SDN_persons()
+    #xml_reader.load_all_SDN_persons()
     data_store = DataStore()
     data_store.insert_sdn_persons(xml_reader.SDN_Persons)
     exp = Exporter(data_store)

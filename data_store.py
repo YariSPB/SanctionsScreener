@@ -67,14 +67,6 @@ class DataStore(DB_schema):
             return result[0]
         return None
 
-    def get_latest_entry_date(self):
-        db_entry = self.cur.execute('SELECT MAX(SDNEntryDate) FROM SDNParty')
-        result = db_entry.fetchone()
-        if result[0]:
-            print('Latest Database SDN entry from: ' + result[0])
-            return result[0]
-        return None
-
     def commit(self):
         self.con.commit()
 
