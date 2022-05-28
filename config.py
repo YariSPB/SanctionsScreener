@@ -34,9 +34,6 @@ def get_entity_str(number):
 
 
 # Database schemas
-properties_schema = '''property_id INTEGER PRIMARY KEY, 
-                name TEXT
-             '''
 properties = [
     'Date_birth',
     'Nationality',
@@ -44,17 +41,6 @@ properties = [
     'Alias_cyrillic',
     'Tax_ID'
 ]
-
-features_schema = '''feature_id INTEGER PRIMARY KEY,
-                Value TEXT,
-                Entity_ref INTEGER NOT NULL,
-                Property_ref INTEGER NOT NULL,
-                FOREIGN KEY (Entity_ref) REFERENCES SDNParty (FixedRef)
-                ON DELETE CASCADE
-                FOREIGN KEY (Property_ref) REFERENCES Properties (property_id)
-                ON DELETE CASCADE
-                UNIQUE(Value, Entity_ref, Property_ref)
-             '''
 
 identity_schema = '''id INTEGER PRIMARY KEY,
                  name TEXT NOT NULL,
