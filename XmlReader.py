@@ -14,7 +14,7 @@ class XmlReader:
         self.SDN_data = {}
         self.persons = {}
         self.SDN_Persons = {}
-        self.SDN_Entities  ={}
+        self.SDN_Entities = {}
         self.countries = {}
         self.IDRegDocTypes = {}
         self.reg_data = {}
@@ -81,12 +81,9 @@ class XmlReader:
         self.__find_entities()
         pass
 
-
-
-
     def __load_all_SDN_persons(self):
         self.find_persons()
-        #self.__collect_SDN_data()
+        # self.__collect_SDN_data()
         for key in self.persons:
             sdn_record = self.SDN_data[key]
             person = self.persons[key]
@@ -123,7 +120,7 @@ class XmlReader:
                 feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
                 version_location = feature_version.find(c.tree_prefix + 'VersionLocation')
                 location_id = version_location.attrib.get('LocationID')
-                area_code = self.locations[location_id]
+                area_code = self.locations[location_id]['AreaCode']
                 entity.locations.add(self.areas[area_code])
 
         sanctions_record = self.SDN_data[entity.unique_id]
@@ -132,24 +129,27 @@ class XmlReader:
         return entity
 
     def __get_areas(self):
-        locations = self.root.findall(f"{c.tree_prefix}ReferenceValueSets/{c.tree_prefix}AreaCodeValues/{c.tree_prefix}AreaCode")
+        locations = self.root.findall(
+            f"{c.tree_prefix}ReferenceValueSets/{c.tree_prefix}AreaCodeValues/{c.tree_prefix}AreaCode")
         for location in locations:
             countryID = location.attrib.get('CountryID')
             location = location.attrib.get('Description')
             self.areas[countryID] = location
 
-
     def __load_locations(self):
         locations = self.root.findall(f"{c.tree_prefix}Locations/{c.tree_prefix}Location")
         for location in locations:
             id = location.attrib.get('ID')
+            if not id in self.locations:
+                self.locations[id] = {}
             loc_area_code = location.find(f"{c.tree_prefix}LocationAreaCode")
-            if loc_area_code is None:
-                continue
-            area_code = loc_area_code.attrib.get('AreaCodeID')
-            self.locations[id] = area_code
+            if loc_area_code is not None:
+                area_code = loc_area_code.attrib.get('AreaCodeID')
+                self.locations[id]['AreaCode'] = area_code
 
-
+            value = location.find(f".//{c.tree_prefix}Value")
+            if value is not None:
+                self.locations[id]['Nationality'] = value.text
 
     def find_persons(self):
         distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
@@ -163,16 +163,15 @@ class XmlReader:
                 entity_type = c.Entity.INDIVIDUAL
                 self.__append_person(entry)
 
-
     def __append_person(self, entry):
         person = Person()
         fixed_ref = entry.attrib.get('FixedRef')
         profile = entry.find(c.tree_prefix + 'Profile')
         identity = profile.find(c.tree_prefix + 'Identity')
         identity_id = identity.attrib.get('ID')
-        #person.tax_id = self.__get_reg_id(identity_id)
+        # person.tax_id = self.__get_reg_id(identity_id)
         person.tax_id = self.__get_person_reg_id(identity_id)
-        #aliases = identity.findall(c.tree_prefix + 'Alias')
+        # aliases = identity.findall(c.tree_prefix + 'Alias')
         alias_dict = self.__get__aliases(identity)
         person.primary_name = alias_dict['Primary']
         person.secondary_latin = alias_dict['Secondary_latin']
