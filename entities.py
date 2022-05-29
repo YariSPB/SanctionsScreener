@@ -27,3 +27,17 @@ class SDN_Person:
         self.programs = programs
 
 
+class SDN_Entity:
+    def __init__(self):
+        self.unique_id = None
+        self.primary_name = None
+        self.alias_latin = []
+        self.aliases = []
+        self.reg_data = []
+        self.reg_date = None
+        self.reg_data = []
+        self.locations = set()
+        self.address = None
+        self.SDN_issue_date = None
+        self.SDN_programs = []
+

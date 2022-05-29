@@ -14,12 +14,18 @@ class XmlReader:
         self.SDN_data = {}
         self.persons = {}
         self.SDN_Persons = {}
+        self.SDN_Entities  ={}
         self.countries = {}
         self.IDRegDocTypes = {}
         self.reg_data = {}
+        self.areas = {}
+        self.locations = {}
         self.__get_all_reg_data()
         self.__collect_SDN_data()
         self.__load_all_SDN_persons()
+        self.__get_areas()
+        self.__load_locations()
+        self.__load_SDN_entities()
 
     def find_by_value(self, str):
         value = self.root.findall(f".//*[.='{str}']")
@@ -72,7 +78,11 @@ class XmlReader:
         return self.all_parties
 
     def __load_SDN_entities(self):
+        self.__find_entities()
         pass
+
+
+
 
     def __load_all_SDN_persons(self):
         self.find_persons()
@@ -83,6 +93,63 @@ class XmlReader:
             sdn_person = SDN_Person(person, key, sdn_record['SDNEntryDate'], sdn_record['SDNPrograms'])
             self.SDN_Persons[key] = sdn_person
         pass
+
+    def __load_SDN_entities(self):
+        distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
+        for entry in distinct_parties:
+            profile = entry.find(c.tree_prefix + 'Profile')
+            entity_sub_type = profile.attrib.get('PartySubTypeID')
+            if entity_sub_type == '3':
+                sdn_entity = self.__get_SDN_entity(entry)
+                self.SDN_Entities[sdn_entity.unique_id] = sdn_entity
+
+    def __get_SDN_entity(self, entry):
+        entity = SDN_Entity()
+        entity.unique_id = entry.attrib.get('FixedRef')
+        profile = entry.find(c.tree_prefix + 'Profile')
+        identity = profile.find(c.tree_prefix + 'Identity')
+        identity_id = identity.attrib.get('ID')
+        if identity_id in self.reg_data:
+            entity.reg_data = self.reg_data[identity_id]
+        alias_dict = self.__get__aliases(identity)
+        entity.primary_name = alias_dict['Primary']
+        entity.aliases = alias_dict['Secondary_latin'] + alias_dict['Secondary_cyrillic']
+
+        features = profile.findall(c.tree_prefix + 'Feature')
+        # collect entity specific features
+        for feature in features:
+            # collect locations
+            if feature.attrib.get('FeatureTypeID') == '25':
+                feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
+                version_location = feature_version.find(c.tree_prefix + 'VersionLocation')
+                location_id = version_location.attrib.get('LocationID')
+                area_code = self.locations[location_id]
+                entity.locations.add(self.areas[area_code])
+
+        sanctions_record = self.SDN_data[entity.unique_id]
+        entity.SDN_issue_date = sanctions_record['SDNEntryDate']
+        entity.SDN_programs = sanctions_record['SDNPrograms']
+        return entity
+
+    def __get_areas(self):
+        locations = self.root.findall(f"{c.tree_prefix}ReferenceValueSets/{c.tree_prefix}AreaCodeValues/{c.tree_prefix}AreaCode")
+        for location in locations:
+            countryID = location.attrib.get('CountryID')
+            location = location.attrib.get('Description')
+            self.areas[countryID] = location
+
+
+    def __load_locations(self):
+        locations = self.root.findall(f"{c.tree_prefix}Locations/{c.tree_prefix}Location")
+        for location in locations:
+            id = location.attrib.get('ID')
+            loc_area_code = location.find(f"{c.tree_prefix}LocationAreaCode")
+            if loc_area_code is None:
+                continue
+            area_code = loc_area_code.attrib.get('AreaCodeID')
+            self.locations[id] = area_code
+
+
 
     def find_persons(self):
         distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
@@ -95,6 +162,7 @@ class XmlReader:
             if entity_sub_type == '4':
                 entity_type = c.Entity.INDIVIDUAL
                 self.__append_person(entry)
+
 
     def __append_person(self, entry):
         person = Person()
@@ -147,6 +215,9 @@ class XmlReader:
         if identity_id in self.reg_data:
             return self.reg_data[identity_id][0][1]
         return None
+
+    def __get_registration_data(self, identity_id):
+        pass
 
     def __get_reg_id(self, identity_id):
         reg_records = self.root.findall(
