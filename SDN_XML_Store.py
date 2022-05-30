@@ -16,10 +16,11 @@ class SDN_XML_Store:
         self.reg_data = {}
         self.__get_all_reg_data()
         self.areas = {}
+        self.countries_all = {}
+        self.__load_all_counties()
         self.__load_loc_areas()
         self.locations = {}
         self.__load_locations()
-
 
     def __collect_SDN_data(self):
         sanction_entries = self.root.find(f'{p}SanctionsEntries')
@@ -85,3 +86,11 @@ class SDN_XML_Store:
             #value = location.find(f".//{c.tree_prefix}Value")
             #if value is not None:
             #    self.locations[id]['Nationality'] = value.text
+
+    def __load_all_counties(self):
+        countries = self.root.findall(
+            f"{p}ReferenceValueSets/{p}CountryValues/{p}Country")
+        for country in countries:
+            countryID = country.attrib.get('ID')
+            name = country.text
+            self.countries_all[countryID] = name
