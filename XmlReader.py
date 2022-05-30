@@ -1,14 +1,16 @@
 import xml.etree.ElementTree as ET
 import config as c
 from entities import *
+from SDN_XML_Store import SDN_XML_Store
 
 tax_id_ref = '1596'
 pre = c.tree_prefix
 
 
-class XmlReader:
+class XmlReader(SDN_XML_Store):
     def __init__(self):
-        self.tree = ET.parse(c.curr_dir + c.raw_data_dir + '/' + c.raw_xml_name)
+        SDN_XML_Store.__init__(self)
+        #self.tree = ET.parse(c.curr_dir + c.raw_data_dir + '/' + c.raw_xml_name)
         self.root = self.tree.getroot()
         self.all_parties = {}
         self.SDN_data = {}
@@ -20,11 +22,12 @@ class XmlReader:
         self.reg_data = {}
         self.areas = {}
         self.locations = {}
+        self.__get_areas()
+        self.__load_locations()
         self.__get_all_reg_data()
         self.__collect_SDN_data()
         self.__load_all_SDN_persons()
-        self.__get_areas()
-        self.__load_locations()
+
         self.__load_SDN_entities()
 
     def find_by_value(self, str):
@@ -76,10 +79,6 @@ class XmlReader:
             self.all_parties[fixed_ref] = party_dict
         self.__append_sanctions_data()
         return self.all_parties
-
-    def __load_SDN_entities(self):
-        self.__find_entities()
-        pass
 
     def __load_all_SDN_persons(self):
         self.find_persons()
@@ -146,10 +145,9 @@ class XmlReader:
             if loc_area_code is not None:
                 area_code = loc_area_code.attrib.get('AreaCodeID')
                 self.locations[id]['AreaCode'] = area_code
-
-            value = location.find(f".//{c.tree_prefix}Value")
-            if value is not None:
-                self.locations[id]['Nationality'] = value.text
+            #value = location.find(f".//{c.tree_prefix}Value")
+            #if value is not None:
+            #    self.locations[id]['Nationality'] = value.text
 
     def find_persons(self):
         distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
@@ -181,10 +179,6 @@ class XmlReader:
         for feature in features:
             if feature.attrib.get('FeatureTypeID') == '8':
                 # get DOB
-                # feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
-                # date_period = feature_version.find(c.tree_prefix + 'DatePeriod')
-                # start_date = date_period.find(c.tree_prefix + 'Start')
-                # from_date = start_date.find(c.tree_prefix + 'From')
                 from_date = feature.find(f"{pre}FeatureVersion/{pre}DatePeriod/{pre}Start/{pre}From")
                 year = from_date.find(pre + 'Year').text
                 month = from_date.find(pre + 'Month').text.zfill(2)
@@ -192,7 +186,6 @@ class XmlReader:
                 person.birth_date = year + '-' + month + '-' + day
             elif feature.attrib.get('FeatureTypeID') == '224':
                 # gender
-                feature_version = feature.find(c.tree_prefix + 'FeatureVersion')
                 version_detail = feature.find(f"{pre}FeatureVersion/{pre}VersionDetail")
                 if version_detail.attrib.get('DetailReferenceID') == '91526':
                     person.gender = 'Male'
