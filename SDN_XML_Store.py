@@ -76,16 +76,54 @@ class SDN_XML_Store:
     def __load_locations(self):
         locations = self.root.findall(f"{p}Locations/{p}Location")
         for location in locations:
-            id = location.attrib.get('ID')
-            if not id in self.locations:
-                self.locations[id] = {}
+            loc_id = location.attrib.get('ID')
+            loc_record = Location(loc_id)
+            if not loc_id in self.locations:
+                self.locations[loc_id] = loc_record
+            #get location area
             loc_area_code = location.find(f"{p}LocationAreaCode")
             if loc_area_code is not None:
                 area_code = loc_area_code.attrib.get('AreaCodeID')
-                self.locations[id]['AreaCode'] = area_code
-            #value = location.find(f".//{c.tree_prefix}Value")
-            #if value is not None:
-            #    self.locations[id]['Nationality'] = value.text
+                loc_record.area = self.areas[area_code]
+                #self.locations[loc_id]['Area'] = self.areas[area_code]
+            #get country
+            country = location.find(f"{p}LocationCountry")
+            if country is not None:
+                country_id = country.attrib.get('CountryID')
+                loc_record.country = self.countries_all[country_id]
+                #self.locations[loc_id]['Country'] = self.countries_all[country_id]
+
+            location_parts = location.findall(f"{p}LocationPart")
+            if location_parts is not None:
+                for location_part in location_parts:
+                    type_id =  location_part.attrib.get('LocPartTypeID')
+                    #address1
+                    if type_id == '1451':
+                        location_part_value = location_part.find(f"{p}LocationPartValue")
+                        if location_part_value.attrib.get('Primary') == 'true':
+                            loc_record.primary_address = location_part_value.find(f"{p}Value").text
+                    #region
+                    elif type_id == '1450':
+                        location_part_value = location_part.find(f"{p}LocationPartValue")
+                        if location_part_value.attrib.get('Primary') == 'true':
+                            loc_record.region = location_part_value.find(f"{p}Value").text
+                    #state/province
+                    elif type_id == '1455':
+                        location_part_value = location_part.find(f"{p}LocationPartValue")
+                        if location_part_value.attrib.get('Primary') == 'true':
+                            loc_record.state_province = location_part_value.find(f"{p}Value").text
+                    #postal
+                    elif type_id == '1456':
+                        location_part_value = location_part.find(f"{p}LocationPartValue")
+                        if location_part_value.attrib.get('Primary') == 'true':
+                            loc_record.postal_code = location_part_value.find(f"{p}Value").text
+                    #city
+                    elif type_id == '1454':
+                        location_part_value = location_part.find(f"{p}LocationPartValue")
+                        if location_part_value.attrib.get('Primary') == 'true':
+                            loc_record.primary_address = location_part_value.find(f"{p}Value").text
+
+
 
     def __load_all_counties(self):
         countries = self.root.findall(
@@ -94,3 +132,15 @@ class SDN_XML_Store:
             countryID = country.attrib.get('ID')
             name = country.text
             self.countries_all[countryID] = name
+
+
+class Location:
+    def __init__(self, location_id):
+        self.id = location_id
+        self.area = None
+        self.country = None
+        self.region = None
+        self.state_province = None
+        self.primary_address = None
+        self.city = None
+        self.postal_code = None
