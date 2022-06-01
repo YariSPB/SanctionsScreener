@@ -96,7 +96,7 @@ class SDN_XML_Store:
             location_parts = location.findall(f"{p}LocationPart")
             if location_parts is not None:
                 for location_part in location_parts:
-                    type_id =  location_part.attrib.get('LocPartTypeID')
+                    type_id = location_part.attrib.get('LocPartTypeID')
                     #address1
                     if type_id == '1451':
                         location_part_value = location_part.find(f"{p}LocationPartValue")
@@ -121,7 +121,7 @@ class SDN_XML_Store:
                     elif type_id == '1454':
                         location_part_value = location_part.find(f"{p}LocationPartValue")
                         if location_part_value.attrib.get('Primary') == 'true':
-                            loc_record.primary_address = location_part_value.find(f"{p}Value").text
+                            loc_record.city = location_part_value.find(f"{p}Value").text
 
 
 
@@ -134,13 +134,3 @@ class SDN_XML_Store:
             self.countries_all[countryID] = name
 
 
-class Location:
-    def __init__(self, location_id):
-        self.id = location_id
-        self.area = None
-        self.country = None
-        self.region = None
-        self.state_province = None
-        self.primary_address = None
-        self.city = None
-        self.postal_code = None

@@ -41,3 +41,14 @@ class SDN_Entity:
         self.SDN_issue_date = None
         self.SDN_programs = []
 
+
+class Location:
+    def __init__(self, location_id):
+        self.id = location_id
+        self.area = None
+        self.country = None
+        self.region = None
+        self.state_province = None
+        self.primary_address = None
+        self.city = None
+        self.postal_code = None

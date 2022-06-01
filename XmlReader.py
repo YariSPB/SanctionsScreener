@@ -106,8 +106,10 @@ class XmlReader(SDN_XML_Store):
                 feature_version = feature.find(f'{p}FeatureVersion')
                 version_location = feature_version.find(f'{p}VersionLocation')
                 location_id = version_location.attrib.get('LocationID')
-                area = self.locations[location_id].area#['Area']
-                entity.locations.add(area)
+                loc = self.locations[location_id]
+                entity.locations.add(loc)
+                #area = self.locations[location_id].area#['Area']
+                #entity.locations.add(area)
 
         sanctions_record = self.SDN_data[entity.unique_id]
         entity.SDN_issue_date = sanctions_record['SDNEntryDate']
