@@ -10,7 +10,7 @@ import time
 class Screener:
     def __init__(self, db: DataStore):
         self.data_store = db
-        self.csv_exporter = Exporter(db)
+        self.csv_exporter = Exporter()
         self.file_data = []
         self.ftp_file_data={}
         pathlib.Path(c.curr_dir + c.raw_data_dir).mkdir(exist_ok=True)
@@ -70,8 +70,8 @@ class Screener:
         self.ftp_file_data[file_name] = date
         self.file_data.append(data_line)
 
-    @staticmethod
-    def load_SDN_file(filename):
+
+def load_SDN_file(filename):
         try:
             print("Connecting to ftp ", c.HOSTNAME)
             # Connect FTP Server

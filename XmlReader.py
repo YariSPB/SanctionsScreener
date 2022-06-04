@@ -14,6 +14,7 @@ class XmlReader(SDN_XML_Store):
         self.all_SDN = {}
         self.SDN_Persons = {}
         self.SDN_Entities = {}
+        self.SDN_Generic = {}
         self.countries = {}
         #self.__load_all_SDN_persons()
         #self.__load_SDN_entities()
@@ -32,63 +33,23 @@ class XmlReader(SDN_XML_Store):
                 sdn_entity = self.__get_SDN_person(entry)
                 self.SDN_Persons[fixed_ref] = sdn_entity
                 self.all_SDN[fixed_ref] = sdn_entity
+                continue
             elif entity_sub_type == '3':
                 sdn_entity = self.__get_SDN_entity(entry)
                 self.SDN_Entities[fixed_ref] = sdn_entity
                 self.all_SDN[fixed_ref] = sdn_entity
+                continue
             elif entity_sub_type == '2':
                 entity_type = c.Entity.AIRCRAFT
             elif entity_sub_type == '1':
                 entity_type = c.Entity.VESSEL
             else:
                 entity_type = c.Entity.OTHER
+            sdn_entity = self.__get_generic_SDN_entity(entry, entity_type)
+            self.SDN_Generic[fixed_ref] = sdn_entity
+            self.all_SDN[fixed_ref] = sdn_entity
         return self.all_SDN
 
-    def get_distinct_entities(self):
-        distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
-        for entry in distinct_parties:
-            party_dict = {}
-            fixed_ref = entry.attrib.get('FixedRef')
-            party_dict['FixedRef'] = entry.attrib.get('FixedRef')
-
-            profile = entry.find(c.tree_prefix + 'Profile')
-            entity_sub_type = profile.attrib.get('PartySubTypeID')
-            if entity_sub_type == '4':
-                entity_type = c.Entity.INDIVIDUAL
-                self.__append_person(entry)
-            elif entity_sub_type == '3':
-                entity_type = c.Entity.ENTITY
-            elif entity_sub_type == '2':
-                entity_type = c.Entity.AIRCRAFT
-            elif entity_sub_type == '1':
-                entity_type = c.Entity.VESSEL
-            else:
-                entity_type = c.Entity.OTHER
-
-            party_dict['EntityType'] = entity_type
-            identity = profile.find(c.tree_prefix + 'Identity')
-            aliases = identity.findall(c.tree_prefix + 'Alias')
-            alias_dict = self.__get__aliases(aliases)
-            party_dict['PrimaryName'] = alias_dict['Primary']
-
-            # get latin aliases concatenated
-            second_name = []
-            for alias in aliases:
-                if alias.attrib.get('Primary') == 'false':
-                    for documented_name in alias:
-                        if documented_name.attrib.get('DocNameStatusID') == '2':
-                            for documented_name_part in documented_name:
-                                for name_part in documented_name_part:
-                                    if name_part.attrib.get('ScriptID') == "215":
-                                        second_name.append(name_part.text)
-                    break
-
-            party_dict['AliasLatin'] = ' '.join(second_name)
-            party_dict['Alias_dict'] = alias_dict
-
-            self.all_parties[fixed_ref] = party_dict
-        self.__append_sanctions_data()
-        return self.all_parties
 
     def __load_all_SDN_persons(self):
         self.find_persons()
@@ -108,6 +69,38 @@ class XmlReader(SDN_XML_Store):
             if entity_sub_type == '3':
                 sdn_entity = self.__get_SDN_entity(entry)
                 self.SDN_Entities[sdn_entity.unique_id] = sdn_entity
+
+
+    def __get_generic_SDN_entity(self, entry, entity_type: c. Entity):
+        entity = SDN_Base_Entity()
+        entity.type = entity_type
+        entity.unique_id = entry.attrib.get('FixedRef')
+        profile = entry.find(f'{p}Profile')
+        identity = profile.find(f'{p}Identity')
+        identity_id = identity.attrib.get('ID')
+        if identity_id in self.reg_data:
+            entity.reg_data = self.reg_data[identity_id]
+        entity.primary_name = self.__get_primary_name(identity)
+        entity.aliases = self.__get_secondary_aliases(identity)
+        features = profile.findall(c.tree_prefix + 'Feature')
+        # collect entity specific features
+        for feature in features:
+            # collect locations
+            if feature.attrib.get('FeatureTypeID') == '25':
+                feature_version = feature.find(f'{p}FeatureVersion')
+                version_location = feature_version.find(f'{p}VersionLocation')
+                location_id = version_location.attrib.get('LocationID')
+                loc = self.locations[location_id]
+                entity.locations.add(loc)
+
+        sanctions_record = self.SDN_data[entity.unique_id]
+        entity.SDN_issue_date = sanctions_record['SDNEntryDate']
+        entity.SDN_programs = sanctions_record['SDNPrograms']
+        return entity
+
+
+
+        return entity
 
     def __get_SDN_entity(self, entry):
         entity = SDN_Entity()
@@ -249,6 +242,14 @@ class XmlReader(SDN_XML_Store):
         value = location.find(f".//{p}Value").text
         self.countries[location_id] = value
         return value
+
+    def __get_primary_name(self, identity):
+        primary_documented_name = identity.find(f".//{p}DocumentedName[@DocNameStatusID='1']")
+        primary = []
+        for documented_name_part in primary_documented_name:
+            for name_part in documented_name_part:
+                primary.append(name_part.text)
+        return ' '.join(primary)
 
     def __get_secondary_aliases(self,identity):
         aliases = []
