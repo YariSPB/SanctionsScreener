@@ -34,7 +34,7 @@ class Exporter:
                 for item in export_sdn:
 
                     line = item.get_line()
-                    print(line)
+                    #print(line)
                     writer.writerow(line)
         except Exception as e:
             print(str(e))
@@ -98,7 +98,7 @@ class Export_SDN_Entity:
 
     def __get_comment(self, sdn_entity: SDN_Entity):
         comment=[]
-        comment.append(f'Programs {", ".join(sdn_entity.SDN_programs)}')
+        comment.append(f'Programs {sdn_entity.SDN_programs}')
 
         if sdn_entity.reg_date:
             comment.append(f'Reg.Date {sdn_entity.reg_date}')
@@ -111,7 +111,8 @@ class Export_SDN_Entity:
             for location in sdn_entity.locations:
                 full_address = location.print()
                 clean_address = full_address.encode('ascii', errors='ignore').decode()
-                comment.append(f'Address {clean_address}')
+                if len(clean_address) > 0:
+                   comment.append(f'Address {clean_address}')
 
         for alias in sdn_entity.aliases:
             if alias[1] == c.Script.cyrillic.name:

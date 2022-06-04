@@ -36,7 +36,7 @@ class SDN_Entity:
         self.reg_data = []
         self.locations = set()
         self.SDN_issue_date = None
-        self.SDN_programs = []
+        self.SDN_programs = None
 
     def get_cyrillic_name(self):
         for alias in self.aliases:
