@@ -6,7 +6,6 @@ import csv, codecs
 import io
 import re
 
-
 file_path = c.curr_dir + c.export_dir + "/" + c.SDN_SCV
 
 
@@ -32,9 +31,8 @@ class Exporter:
                           'Issue_Date']
                 writer.writerow(header)
                 for item in export_sdn:
-
                     line = item.get_line()
-                    #print(line)
+                    # print(line)
                     writer.writerow(line)
         except Exception as e:
             print(str(e))
@@ -72,15 +70,16 @@ class Exporter:
             exit()
         return
 
+
 class Export_SDN_Entity:
     def __init__(self, sdn_entity: SDN_Entity):
         if sdn_entity.unique_id == '26744':
-            f=5
+            f = 5
         self.sdn_id = sdn_entity.unique_id
         self.cyrillic_name = sdn_entity.get_cyrillic_name()
         if self.cyrillic_name:
             self.cyrillic_name = self.__filter_cyrillic(self.cyrillic_name)
-            #self.cyrillic_name.encode('utf-8', 'ignore').decode()
+            # self.cyrillic_name.encode('utf-8', 'ignore').decode()
         self.latin_name = sdn_entity.primary_name
         self.type = 'Entity'
         self.comment = None
@@ -97,7 +96,7 @@ class Export_SDN_Entity:
                 return alias[0]
 
     def __get_comment(self, sdn_entity: SDN_Entity):
-        comment=[]
+        comment = []
         comment.append(f'Programs {sdn_entity.SDN_programs}')
 
         if sdn_entity.reg_date:
@@ -112,17 +111,17 @@ class Export_SDN_Entity:
                 full_address = location.print()
                 clean_address = full_address.encode('ascii', errors='ignore').decode()
                 if len(clean_address) > 0:
-                   comment.append(f'Address {clean_address}')
+                    comment.append(f'Address {clean_address}')
 
         for alias in sdn_entity.aliases:
             if alias[1] == c.Script.cyrillic.name:
                 # remove unreadable
-                #cyrillic_name = alias[0].encode('utf-8', 'ignore').decode()
+                # cyrillic_name = alias[0].encode('utf-8', 'ignore').decode()
                 cyrillic_name = self.__filter_cyrillic(alias[0])
                 record = f"a.k.a. {cyrillic_name}"
             else:
                 # only ascii for latin
-                record = f"a.k.a. {alias[0].encode('ascii',errors='ignore').decode()}"
+                record = f"a.k.a. {alias[0].encode('ascii', errors='ignore').decode()}"
             comment.append(record)
         self.comment = '; '.join(comment)
 
@@ -134,6 +133,7 @@ class Export_SDN_Entity:
                 self.comment,
                 self.issue_date]
         return line
+
 
 class Export_SDN_Person:
     def __init__(self, sdn_person: SDN_Person):
@@ -147,7 +147,7 @@ class Export_SDN_Person:
         self.issue_date = sdn_person.date
 
     def __get_comment(self, sdn_person):
-        comment=[]
+        comment = []
         comment.append(f'Program {sdn_person.programs}')
 
         if sdn_person.person.gender:
@@ -164,6 +164,6 @@ class Export_SDN_Person:
                 record = f"a.k.a. {cyrillic_name}"
             else:
                 # only ascii for latin
-                record = f"a.k.a. {alias[0].encode('ascii',errors='ignore').decode()}"
+                record = f"a.k.a. {alias[0].encode('ascii', errors='ignore').decode()}"
             comment.append(record)
         self.comment = '; '.join(comment)

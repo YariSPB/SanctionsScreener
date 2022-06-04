@@ -11,15 +11,38 @@ class XmlReader(SDN_XML_Store):
     def __init__(self):
         SDN_XML_Store.__init__(self)
         self.persons = {}
+        self.all_SDN = {}
         self.SDN_Persons = {}
         self.SDN_Entities = {}
         self.countries = {}
-        self.__load_all_SDN_persons()
-        self.__load_SDN_entities()
+        #self.__load_all_SDN_persons()
+        #self.__load_SDN_entities()
 
     def find_by_value(self, str):
         value = self.root.findall(f".//*[.='{str}']")
         return value
+
+    def get_all_SDN(self):
+        distinct_parties = self.root.find(f'{p}DistinctParties')
+        for entry in distinct_parties:
+            fixed_ref = entry.attrib.get('FixedRef')
+            profile = entry.find(f'{p}Profile')
+            entity_sub_type = profile.attrib.get('PartySubTypeID')
+            if entity_sub_type == '4':
+                sdn_entity = self.__get_SDN_person(entry)
+                self.SDN_Persons[fixed_ref] = sdn_entity
+                self.all_SDN[fixed_ref] = sdn_entity
+            elif entity_sub_type == '3':
+                sdn_entity = self.__get_SDN_entity(entry)
+                self.SDN_Entities[fixed_ref] = sdn_entity
+                self.all_SDN[fixed_ref] = sdn_entity
+            elif entity_sub_type == '2':
+                entity_type = c.Entity.AIRCRAFT
+            elif entity_sub_type == '1':
+                entity_type = c.Entity.VESSEL
+            else:
+                entity_type = c.Entity.OTHER
+        return self.all_SDN
 
     def get_distinct_entities(self):
         distinct_parties = self.root.find(c.tree_prefix + 'DistinctParties')
@@ -116,6 +139,47 @@ class XmlReader(SDN_XML_Store):
         entity.SDN_issue_date = sanctions_record['SDNEntryDate']
         entity.SDN_programs = sanctions_record['SDNPrograms']
         return entity
+
+    def __get_SDN_person(self, entry):
+        person = Person()
+        fixed_ref = entry.attrib.get('FixedRef')
+        profile = entry.find(f'{p}Profile')
+        identity = profile.find(f'{p}Identity')
+        identity_id = identity.attrib.get('ID')
+        person.tax_id = self.__get_person_reg_id(identity_id)
+        alias_dict = self.__get__aliases(identity)
+        person.primary_name = alias_dict['Primary']
+        person.secondary_latin = alias_dict['Secondary_latin']
+        person.secondary_cyrillic = alias_dict['Secondary_cyrillic']
+        features = profile.findall(f'{p}Feature')
+        for feature in features:
+            if feature.attrib.get('FeatureTypeID') == '8':
+                # get DOB
+                from_date = feature.find(f"{p}FeatureVersion/{p}DatePeriod/{p}Start/{p}From")
+                year = from_date.find(f'{p}Year').text
+                month = from_date.find(f'{p}Month').text.zfill(2)
+                day = from_date.find(f'{p}Day').text.zfill(2)
+                person.birth_date = year + '-' + month + '-' + day
+            elif feature.attrib.get('FeatureTypeID') == '224':
+                # gender
+                version_detail = feature.find(f"{p}FeatureVersion/{p}VersionDetail")
+                if version_detail.attrib.get('DetailReferenceID') == '91526':
+                    person.gender = 'Male'
+                elif version_detail.attrib.get('DetailReferenceID') == '91527':
+                    person.gender = 'Female'
+            elif feature.attrib.get('FeatureTypeID') == '10':
+                # nationality country
+                feature_version = feature.find(f'{p}FeatureVersion')
+                version_detail = feature_version.find(f'{p}VersionDetail')
+                if version_detail.attrib.get('DetailTypeID') == '1433':
+                    # country only
+                    version_location = feature_version.find(f'{p}VersionLocation')
+                    location_id = version_location.attrib.get('LocationID')
+                    person.nationality = self.__get_nationality(location_id)
+
+        sdn_record = self.SDN_data[fixed_ref]
+        return SDN_Person(person, fixed_ref, sdn_record['SDNEntryDate'], sdn_record['SDNPrograms'])
+
 
     def find_persons(self):
         distinct_parties = self.root.find(f'{p}DistinctParties')

@@ -9,9 +9,10 @@ import re
 if __name__ == '__main__':
     print("SDN Screener started.")
     xml_reader = XmlReader()
-    data_store = DataStore()
-    exp = Exporter(data_store)
-    exp.export_sdn_entities(xml_reader.SDN_Entities)
+    all_sdn = xml_reader.get_all_SDN()
+    #data_store = DataStore()
+    #exp = Exporter(data_store)
+    #exp.export_sdn_entities(xml_reader.SDN_Entities)
     exit()
     #xml_reader.load_all_SDN_persons()
     data_store = DataStore()
