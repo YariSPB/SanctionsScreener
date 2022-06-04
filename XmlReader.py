@@ -151,6 +151,7 @@ class XmlReader(SDN_XML_Store):
         person.primary_name = alias_dict['Primary']
         person.secondary_latin = alias_dict['Secondary_latin']
         person.secondary_cyrillic = alias_dict['Secondary_cyrillic']
+        person.aliases = self.__get_secondary_aliases(identity)
         features = profile.findall(f'{p}Feature')
         for feature in features:
             if feature.attrib.get('FeatureTypeID') == '8':

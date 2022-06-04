@@ -10,6 +10,8 @@ if __name__ == '__main__':
     print("SDN Screener started.")
     xml_reader = XmlReader()
     all_sdn = xml_reader.get_all_SDN()
+    exp = Exporter()
+    exp.export_to_file(all_sdn)
     #data_store = DataStore()
     #exp = Exporter(data_store)
     #exp.export_sdn_entities(xml_reader.SDN_Entities)
