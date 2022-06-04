@@ -96,7 +96,8 @@ class XmlReader(SDN_XML_Store):
             entity.reg_data = self.reg_data[identity_id]
         alias_dict = self.__get__aliases(identity)
         entity.primary_name = alias_dict['Primary']
-        entity.aliases = alias_dict['Secondary_latin'] + alias_dict['Secondary_cyrillic']
+        #entity.aliases = alias_dict['Secondary_latin'] + alias_dict['Secondary_cyrillic']
+        entity.aliases = self.__get_secondary_aliases(identity)
 
         features = profile.findall(c.tree_prefix + 'Feature')
         # collect entity specific features
@@ -183,6 +184,29 @@ class XmlReader(SDN_XML_Store):
         value = location.find(f".//{p}Value").text
         self.countries[location_id] = value
         return value
+
+    def __get_secondary_aliases(self,identity):
+        aliases = []
+        for alias in identity.findall(p + 'Alias'):
+            for documented_name in alias:
+                fullname_latin = []
+                fullname_cyrillic = []
+                #search only secondary == 2
+                if documented_name.attrib.get('DocNameStatusID') == '2':
+                    for documented_name_part in documented_name:
+                        for name_part in documented_name_part:
+                            if name_part.attrib.get('ScriptID') == "215":
+                                fullname_latin.append(name_part.text)
+                            elif name_part.attrib.get('ScriptID') == "220":
+                                fullname_cyrillic.append(name_part.text)
+                    if fullname_latin:
+                        name = ' '.join(fullname_latin)
+                        aliases.append((name, c.Script.latin.name))
+                    elif fullname_cyrillic:
+                        name = ' '.join(fullname_cyrillic)
+                        aliases.append((name, c.Script.cyrillic.name))
+        return aliases
+
 
     def __get__aliases(self, identity):
         aliases = {"Primary": None, "Secondary_latin": [], "Secondary_cyrillic": []}

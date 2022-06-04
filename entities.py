@@ -31,15 +31,17 @@ class SDN_Entity:
     def __init__(self):
         self.unique_id = None
         self.primary_name = None
-        self.alias_latin = []
         self.aliases = []
-        self.reg_data = []
         self.reg_date = None
         self.reg_data = []
         self.locations = set()
-        self.address = None
         self.SDN_issue_date = None
         self.SDN_programs = []
+
+    def get_cyrillic_name(self):
+        for alias in self.aliases:
+            if alias[1] == c.Script.cyrillic.name:
+                return alias[0]
 
 
 class Location:
@@ -52,3 +54,15 @@ class Location:
         self.primary_address = None
         self.city = None
         self.postal_code = None
+
+    def print(self):
+        data = []
+        if self.postal_code:
+            data.append(self.postal_code)
+        if self.country:
+            data.append(self.country)
+        if self.city:
+            data.append(self.city)
+        if self.primary_address:
+            data.append(self.primary_address)
+        return ', '.join(data)
