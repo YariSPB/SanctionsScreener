@@ -27,24 +27,9 @@ class SDN_Person:
         self.programs = programs
 
 
-class SDN_Base_Entity:
-    def __init__(self):
-        self.type = c.Entity
-        self.unique_id = None
-        self.primary_name = None
-        self.aliases = []
-        self.reg_data = []
-        self.locations = set()
-        self.SDN_issue_date = None
-        self.SDN_programs = None
-
-    def get_cyrillic_name(self):
-            for alias in self.aliases:
-                if alias[1] == c.Script.cyrillic.name:
-                    return alias[0]
-
 class SDN_Entity:
-    def __init__(self):
+    def __init__(self, entity_type: c.Entity):
+        self.type = entity_type
         self.unique_id = None
         self.primary_name = None
         self.aliases = []

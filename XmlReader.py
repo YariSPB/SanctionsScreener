@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 import config as c
 from entities import *
 from SDN_XML_Store import SDN_XML_Store
+import time
 
 tax_id_ref = '1596'
 p = c.tree_prefix
@@ -14,10 +15,15 @@ class XmlReader(SDN_XML_Store):
         self.all_SDN = {}
         self.SDN_Persons = {}
         self.SDN_Entities = {}
-        self.SDN_Generic = {}
         self.countries = {}
-        #self.__load_all_SDN_persons()
-        #self.__load_SDN_entities()
+
+    def get_issue_date(self):
+        date_of_issue = self.root.find(f'{p}DateOfIssue')
+        year = date_of_issue.find(f'{p}Year').text
+        month = date_of_issue.find(f'{p}Month').text.zfill(2)
+        day = date_of_issue.find(f'{p}Day').text.zfill(2)
+        issue_date_str = year + '-' + month + '-' + day
+        return time.strptime(issue_date_str, "%Y-%m-%d")
 
     def find_by_value(self, str):
         value = self.root.findall(f".//*[.='{str}']")
@@ -32,47 +38,23 @@ class XmlReader(SDN_XML_Store):
             if entity_sub_type == '4':
                 sdn_entity = self.__get_SDN_person(entry)
                 self.SDN_Persons[fixed_ref] = sdn_entity
-                self.all_SDN[fixed_ref] = sdn_entity
-                continue
             elif entity_sub_type == '3':
-                sdn_entity = self.__get_SDN_entity(entry)
+                sdn_entity = self.__get_generic_SDN_entity(entry, c.Entity.ENTITY)
                 self.SDN_Entities[fixed_ref] = sdn_entity
-                self.all_SDN[fixed_ref] = sdn_entity
-                continue
             elif entity_sub_type == '2':
-                entity_type = c.Entity.AIRCRAFT
+                sdn_entity = self.__get_generic_SDN_entity(entry, c.Entity.AIRCRAFT)
+                self.SDN_Entities[fixed_ref] = sdn_entity
             elif entity_sub_type == '1':
-                entity_type = c.Entity.VESSEL
+                sdn_entity = self.__get_generic_SDN_entity(entry, c.Entity.VESSEL)
+                self.SDN_Entities[fixed_ref] = sdn_entity
             else:
-                entity_type = c.Entity.OTHER
-            sdn_entity = self.__get_generic_SDN_entity(entry, entity_type)
-            self.SDN_Generic[fixed_ref] = sdn_entity
+                sdn_entity = self.__get_generic_SDN_entity(entry, c.Entity.OTHER)
+                self.SDN_Entities[fixed_ref] = sdn_entity
             self.all_SDN[fixed_ref] = sdn_entity
         return self.all_SDN
 
-
-    def __load_all_SDN_persons(self):
-        self.find_persons()
-        # self.__collect_SDN_data()
-        for key in self.persons:
-            sdn_record = self.SDN_data[key]
-            person = self.persons[key]
-            sdn_person = SDN_Person(person, key, sdn_record['SDNEntryDate'], sdn_record['SDNPrograms'])
-            self.SDN_Persons[key] = sdn_person
-        pass
-
-    def __load_SDN_entities(self):
-        distinct_parties = self.root.find(f'{p}DistinctParties')
-        for entry in distinct_parties:
-            profile = entry.find(f'{p}Profile')
-            entity_sub_type = profile.attrib.get('PartySubTypeID')
-            if entity_sub_type == '3':
-                sdn_entity = self.__get_SDN_entity(entry)
-                self.SDN_Entities[sdn_entity.unique_id] = sdn_entity
-
-
     def __get_generic_SDN_entity(self, entry, entity_type: c. Entity):
-        entity = SDN_Base_Entity()
+        entity = SDN_Entity(entity_type)
         entity.type = entity_type
         entity.unique_id = entry.attrib.get('FixedRef')
         profile = entry.find(f'{p}Profile')
@@ -92,41 +74,6 @@ class XmlReader(SDN_XML_Store):
                 location_id = version_location.attrib.get('LocationID')
                 loc = self.locations[location_id]
                 entity.locations.add(loc)
-
-        sanctions_record = self.SDN_data[entity.unique_id]
-        entity.SDN_issue_date = sanctions_record['SDNEntryDate']
-        entity.SDN_programs = sanctions_record['SDNPrograms']
-        return entity
-
-
-
-        return entity
-
-    def __get_SDN_entity(self, entry):
-        entity = SDN_Entity()
-        entity.unique_id = entry.attrib.get('FixedRef')
-        profile = entry.find(f'{p}Profile')
-        identity = profile.find(f'{p}Identity')
-        identity_id = identity.attrib.get('ID')
-        if identity_id in self.reg_data:
-            entity.reg_data = self.reg_data[identity_id]
-        #alias_dict = self.__get__aliases(identity)
-        entity.primary_name = self.__get_primary_name(identity)
-        #entity.aliases = alias_dict['Secondary_latin'] + alias_dict['Secondary_cyrillic']
-        entity.aliases = self.__get_secondary_aliases(identity)
-
-        features = profile.findall(c.tree_prefix + 'Feature')
-        # collect entity specific features
-        for feature in features:
-            # collect locations
-            if feature.attrib.get('FeatureTypeID') == '25':
-                feature_version = feature.find(f'{p}FeatureVersion')
-                version_location = feature_version.find(f'{p}VersionLocation')
-                location_id = version_location.attrib.get('LocationID')
-                loc = self.locations[location_id]
-                entity.locations.add(loc)
-                #area = self.locations[location_id].area#['Area']
-                #entity.locations.add(area)
 
         sanctions_record = self.SDN_data[entity.unique_id]
         entity.SDN_issue_date = sanctions_record['SDNEntryDate']
@@ -174,60 +121,6 @@ class XmlReader(SDN_XML_Store):
         sdn_record = self.SDN_data[fixed_ref]
         return SDN_Person(person, fixed_ref, sdn_record['SDNEntryDate'], sdn_record['SDNPrograms'])
 
-
-    def find_persons(self):
-        distinct_parties = self.root.find(f'{p}DistinctParties')
-        for entry in distinct_parties:
-            party_dict = {}
-            fixed_ref = entry.attrib.get('FixedRef')
-            party_dict['FixedRef'] = entry.attrib.get('FixedRef')
-            profile = entry.find(c.tree_prefix + 'Profile')
-            entity_sub_type = profile.attrib.get('PartySubTypeID')
-            if entity_sub_type == '4':
-                entity_type = c.Entity.INDIVIDUAL
-                self.__append_person(entry)
-
-    def __append_person(self, entry):
-        person = Person()
-        fixed_ref = entry.attrib.get('FixedRef')
-        profile = entry.find(f'{p}Profile')
-        identity = profile.find(f'{p}Identity')
-        identity_id = identity.attrib.get('ID')
-        # person.tax_id = self.__get_reg_id(identity_id)
-        person.tax_id = self.__get_person_reg_id(identity_id)
-        # aliases = identity.findall(c.tree_prefix + 'Alias')
-        alias_dict = self.__get__aliases(identity)
-        person.primary_name = alias_dict['Primary']
-        person.secondary_latin = alias_dict['Secondary_latin']
-        person.secondary_cyrillic = alias_dict['Secondary_cyrillic']
-
-        features = profile.findall(f'{p}Feature')
-        for feature in features:
-            if feature.attrib.get('FeatureTypeID') == '8':
-                # get DOB
-                from_date = feature.find(f"{p}FeatureVersion/{p}DatePeriod/{p}Start/{p}From")
-                year = from_date.find(f'{p}Year').text
-                month = from_date.find(f'{p}Month').text.zfill(2)
-                day = from_date.find(f'{p}Day').text.zfill(2)
-                person.birth_date = year + '-' + month + '-' + day
-            elif feature.attrib.get('FeatureTypeID') == '224':
-                # gender
-                version_detail = feature.find(f"{p}FeatureVersion/{p}VersionDetail")
-                if version_detail.attrib.get('DetailReferenceID') == '91526':
-                    person.gender = 'Male'
-                elif version_detail.attrib.get('DetailReferenceID') == '91527':
-                    person.gender = 'Female'
-            elif feature.attrib.get('FeatureTypeID') == '10':
-                # nationality country
-                feature_version = feature.find(f'{p}FeatureVersion')
-                version_detail = feature_version.find(f'{p}VersionDetail')
-                if version_detail.attrib.get('DetailTypeID') == '1433':
-                    # country only
-                    version_location = feature_version.find(f'{p}VersionLocation')
-                    location_id = version_location.attrib.get('LocationID')
-                    person.nationality = self.__get_nationality(location_id)
-
-        self.persons[fixed_ref] = person
 
     def __get_person_reg_id(self, identity_id):
         if identity_id in self.reg_data:

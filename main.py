@@ -8,30 +8,11 @@ import re
 
 if __name__ == '__main__':
     print("SDN Screener started.")
-    #load_SDN_file(c.raw_xml_name)
-    xml_reader = XmlReader()
-    all_sdn = xml_reader.get_all_SDN()
-    #exit()
-    exp = Exporter()
-    exp.export_to_file(all_sdn)
-    #data_store = DataStore()
-    #exp = Exporter(data_store)
-    #exp.export_sdn_entities(xml_reader.SDN_Entities)
-    exit()
-    #xml_reader.load_all_SDN_persons()
+
     data_store = DataStore()
-    data_store.insert_sdn_persons(xml_reader.SDN_Persons)
-    exp = Exporter(data_store)
-    exp.export_sdn_csv()
-    #sdn_service = Screener(data_store)
-    #sdn_service.get_new_SDN()
-
-    ss=5
+    screener = Screener(data_store)
+    screener.load_new_SDN_and_export_CSV()
     exit()
 
 
-
-    if not screener.new_SDN_published():
-        print('No new SDN entries. Terminating')
-        exit()
 
