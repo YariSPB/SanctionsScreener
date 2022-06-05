@@ -11,7 +11,7 @@ if __name__ == '__main__':
     #load_SDN_file(c.raw_xml_name)
     xml_reader = XmlReader()
     all_sdn = xml_reader.get_all_SDN()
-    exit()
+    #exit()
     exp = Exporter()
     exp.export_to_file(all_sdn)
     #data_store = DataStore()

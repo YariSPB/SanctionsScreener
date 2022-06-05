@@ -110,8 +110,8 @@ class XmlReader(SDN_XML_Store):
         identity_id = identity.attrib.get('ID')
         if identity_id in self.reg_data:
             entity.reg_data = self.reg_data[identity_id]
-        alias_dict = self.__get__aliases(identity)
-        entity.primary_name = alias_dict['Primary']
+        #alias_dict = self.__get__aliases(identity)
+        entity.primary_name = self.__get_primary_name(identity)
         #entity.aliases = alias_dict['Secondary_latin'] + alias_dict['Secondary_cyrillic']
         entity.aliases = self.__get_secondary_aliases(identity)
 

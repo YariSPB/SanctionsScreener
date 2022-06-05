@@ -38,6 +38,11 @@ class SDN_Base_Entity:
         self.SDN_issue_date = None
         self.SDN_programs = None
 
+    def get_cyrillic_name(self):
+            for alias in self.aliases:
+                if alias[1] == c.Script.cyrillic.name:
+                    return alias[0]
+
 class SDN_Entity:
     def __init__(self):
         self.unique_id = None
