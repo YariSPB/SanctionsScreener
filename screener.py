@@ -56,7 +56,8 @@ class Screener:
             print("Error of date screening " + c.FOLDER_NAME + c.raw_xml_name + " . Terminating")
             exit()
 
-        stored_max_date = self.xml_reader.get_issue_date()
+        xml_Reader = XmlReader()
+        stored_max_date = xml_Reader.get_issue_date()
         print('Previously saved issue date:')
         print(stored_max_date)
         if stored_max_date >= proposed_date:
