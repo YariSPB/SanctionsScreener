@@ -9,7 +9,7 @@ Technology: first, the program fetches new SDN file using ftp channel. Second, i
 Architecture:
 - main.py is a launcher.
 - SDN_screener.py does loading from OFAC's ftp server and calls XML parser and CSV exporter.
-- SDN_XML_reader.py is resposible for parsing complex interlinked XML file and preparing data in a format ready to be exported. To begin with, it eagerly iterates over entire XML file and collects relevant data into Python dictionaries in O(n) time. Furthermore, it links principal SDN entities with discovered properties.
+- SDN_XML_reader.py is responsible for parsing complex interlinked data from the XML file into desirable format. To begin with, it eagerly iterates over entire XML file and collects relevant data into Python dictionaries in O(n) time. Furthermore, it links principal SDN entities with discovered properties.
 - SDN_exporter.py flattens collected SDN data into spreadsheet rows and saves a .csv. Its another responsibility is filtering out illegal characters. 
 
 
