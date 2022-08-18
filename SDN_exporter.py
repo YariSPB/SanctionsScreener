@@ -1,15 +1,13 @@
 import encodings.utf_8
-from data_store import *
-import config as c
 import pathlib
-import csv, codecs
-import io
+import csv
 import re
+from entities import *
 
 file_path = c.curr_dir + c.export_dir + "/" + c.SDN_SCV
 
 
-class Exporter:
+class SDN_exporter:
     def __init__(self):
         pathlib.Path(c.curr_dir + c.export_dir).mkdir(exist_ok=True)
 

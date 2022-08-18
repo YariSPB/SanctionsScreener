@@ -2,7 +2,6 @@ import xml.etree.ElementTree as ET
 import config as c
 from entities import *
 
-tax_id_ref = '1596'
 p = c.tree_prefix
 
 
@@ -27,6 +26,7 @@ class SDN_XML_Store:
         for sanctions_entry in sanction_entries:
             sdn_data = self.__get_SDN_data(sanctions_entry)
             self.SDN_data[sdn_data['FixedRef']] = sdn_data
+
 
     def __get_SDN_data(self, sanctions_entry):
         SDN_data = {}
@@ -85,13 +85,11 @@ class SDN_XML_Store:
             if loc_area_code is not None:
                 area_code = loc_area_code.attrib.get('AreaCodeID')
                 loc_record.area = self.areas[area_code]
-                #self.locations[loc_id]['Area'] = self.areas[area_code]
             #get country
             country = location.find(f"{p}LocationCountry")
             if country is not None:
                 country_id = country.attrib.get('CountryID')
                 loc_record.country = self.countries_all[country_id]
-                #self.locations[loc_id]['Country'] = self.countries_all[country_id]
 
             location_parts = location.findall(f"{p}LocationPart")
             if location_parts is not None:
@@ -122,7 +120,6 @@ class SDN_XML_Store:
                         location_part_value = location_part.find(f"{p}LocationPartValue")
                         if location_part_value.attrib.get('Primary') == 'true':
                             loc_record.city = location_part_value.find(f"{p}Value").text
-
 
 
     def __load_all_counties(self):
