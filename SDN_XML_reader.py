@@ -4,11 +4,11 @@ from entities import *
 from SDN_XML_Store import SDN_XML_Store
 import time
 
-tax_id_ref = '1596'
+#tax_id_ref = '1596'
 p = c.tree_prefix
 
 
-class XmlReader(SDN_XML_Store):
+class SDN_XML_reader(SDN_XML_Store):
     def __init__(self):
         SDN_XML_Store.__init__(self)
         self.persons = {}
